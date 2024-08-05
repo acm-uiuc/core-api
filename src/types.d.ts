@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyInstance, FastifyReply } from "fastify";
-import { EventsApiRoles } from "./roles.ts";
+import { AppRoles } from "./roles.ts";
 declare module "fastify" {
   interface FastifyInstance {
     authenticate: (
@@ -9,7 +9,7 @@ declare module "fastify" {
     authorize: (
       request: FastifyRequest,
       reply: FastifyReply,
-      validRoles: EventsApiRoles[],
+      validRoles: AppRoles[],
     ) => Promise<void>;
     runEnvironment: string;
   }

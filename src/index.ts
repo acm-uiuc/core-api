@@ -4,6 +4,7 @@ import fastify, { FastifyInstance } from "fastify";
 import FastifyAuthProvider from "@fastify/auth";
 import fastifyAuthPlugin from "./plugins/auth.js";
 import protectedRoute from "./routes/protected.js";
+import errorHandlerPlugin from "./plugins/errorHandler.js";
 
 const now = () => Date.now();
 
@@ -23,6 +24,7 @@ async function init() {
   });
   await app.register(fastifyAuthPlugin);
   await app.register(FastifyAuthProvider);
+  await app.register(errorHandlerPlugin);
   app.runEnvironment = process.env.RunEnvironment ?? "dev";
   app.addHook("onRequest", (req, _, done) => {
     req.startTime = now();

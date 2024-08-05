@@ -1,9 +1,9 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
-import { UnauthenticatedError, UnauthorizedError } from "../errors/index.js";
-import { EventsApiRoles } from "../roles.js";
+import { BaseError, UnauthenticatedError, UnauthorizedError } from "../errors/index.js";
+import { AppRoles } from "../roles.js";
 
-// const GroupRoleMapping: Record<string, EventsApiRoles[]> = {};
+// const GroupRoleMapping: Record<string, AppRoles[]> = {};
 
 const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.decorate(
@@ -13,8 +13,14 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
       _reply: FastifyReply,
     ): Promise<void> {
       try {
-        request.log.info("Authenticating JWT");
-      } catch (_: unknown) {
+        const clientId = process.env.AadValidClientId;
+        if (!clientId) {
+          throw new UnauthenticatedError({message: "Server could not find valid AAD Client ID."})
+        }
+      } catch (err: unknown) {
+        if (err instanceof BaseError) {
+          throw err;
+        }
         throw new UnauthenticatedError({ message: "Could not verify JWT." });
       }
     },
@@ -24,7 +30,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
     async function (
       request: FastifyRequest,
       _reply: FastifyReply,
-      _validRoles: EventsApiRoles[],
+      _validRoles: AppRoles[],
     ): Promise<void> {
       try {
         request.log.info("Authorizing JWT");

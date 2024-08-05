@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from "fastify";
-import { EventsApiRoles } from "../roles.js";
+import { AppRoles } from "../roles.js";
 
 const protectedRoute: FastifyPluginAsync = async (fastify, _options) => {
   fastify.get(
@@ -8,7 +8,7 @@ const protectedRoute: FastifyPluginAsync = async (fastify, _options) => {
       onRequest: fastify.auth([
         fastify.authenticate,
         async (request, reply) => {
-          fastify.authorize(request, reply, [EventsApiRoles.MANAGER]);
+          fastify.authorize(request, reply, [AppRoles.MANAGER]);
         },
       ]),
     },

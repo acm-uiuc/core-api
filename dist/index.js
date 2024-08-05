@@ -1,9 +1,9 @@
 /* eslint import/no-nodejs-modules: ["error", {"allow": ["crypto"]}] */
 import { randomUUID } from "crypto";
 import fastify from "fastify";
-import { fastifyAuthPlugin } from "./plugins/auth.js";
-import FastifyAuthProvider from '@fastify/auth';
-import { EventsApiRoles } from "./roles.js";
+import FastifyAuthProvider from "@fastify/auth";
+import fastifyAuthPlugin from "./plugins/auth.js";
+import protectedRoute from "./routes/protected.js";
 const now = () => Date.now();
 async function init() {
     const app = fastify({
@@ -21,7 +21,7 @@ async function init() {
     });
     await app.register(fastifyAuthPlugin);
     await app.register(FastifyAuthProvider);
-    app.runEnvironment = process.env.RunEnvironment ?? 'dev';
+    app.runEnvironment = process.env.RunEnvironment ?? "dev";
     app.addHook("onRequest", (req, _, done) => {
         req.startTime = now();
         req.log.info({ url: req.raw.url }, "received request");
@@ -36,15 +36,9 @@ async function init() {
         done();
     });
     app.get("/api/v1/healthz", (_, reply) => reply.send({ message: "UP" }));
-    app.get("/api/v1/protected", async (_, reply) => {
-        app.auth([
-            app.authenticate,
-            async (request, reply) => {
-                await app.authorize(request, reply, [EventsApiRoles.MANAGER]);
-            }
-        ]);
-        reply.send({ message: "UP" });
-    });
+    await app.register(async (api, _options) => {
+        api.register(protectedRoute, { prefix: "/protected" });
+    }, { prefix: "/api/v1" });
     return app;
 }
 if (import.meta.url === `file://${process.argv[1]}`) {

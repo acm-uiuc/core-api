@@ -9,8 +9,8 @@ src_directory_root = src/
 integration_test_directory_root = tests/live_integration/
 
 # CHANGE ME (as needed)
-application_key=infra-events-api-v2
-application_name="InfraEventsApiV2"
+application_key=infra-events-api
+application_name="InfraEventsApi"
 techlead="ronita2@illinois.edu"
 region="us-east-1"
 

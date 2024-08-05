@@ -1,0 +1,228 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infra Sample API using AWS Lambda and Python
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  RunEnvironment:
+    Type: String
+    AllowedValues: [ 'dev', 'prod' ]
+  AlertSNSArn:
+    Description: SNS Queue to send alarm alerts to (prod only)
+    Type: String
+    Default: arn:aws:sns:us-east-1:298118738376:infra-monitor-alerts
+  ApplicationPrefix:
+    Type: String
+    Description: Application prefix, no ending dash
+    AllowedPattern: ^[a-zA-Z0-9]+[a-zA-Z0-9-]+[a-zA-Z0-9]+$
+  ApplicationFriendlyName:
+    Type: String
+    Description: Application friendly name that will be used in resource descriptions
+  VpcRequired:
+    Description: Set to true if the default lambda should be attached to a VPC and a NoVPC version of the lambda should be created. Lambdas to be attached to VPCs to access Postgres.
+    Default: false
+    Type: String
+    AllowedValues: [true, false]
+
+Conditions:
+  IsProd: !Equals [!Ref RunEnvironment, 'prod']
+  ShouldAttachVpc:
+    !Equals [true, !Ref VpcRequired]
+
+Mappings:
+  General:
+    dev:
+      LogRetentionDays: 7
+    prod:
+      LogRetentionDays: 30
+  ApiGwConfig:
+    dev:
+      ApiCertificateArn: arn:aws:acm:us-east-1:427040638965:certificate/63ccdf0b-d2b5-44f0-b589-eceffb935c23
+      HostedZoneId: Z04502822NVIA85WM2SML
+      ApiDomainName: "aws.qa.acmuiuc.org"
+      ValidCorsOrigins: ["*"]
+      AadValidClientId: "251efa82-f589-42e1-9ebb-e214a4f40a0f"
+    prod:
+      ApiCertificateArn: arn:aws:acm:us-east-1:298118738376:certificate/6142a0e2-d62f-478e-bf15-5bdb616fe705
+      HostedZoneId: Z05246633460N5MEB9DBF
+      ApiDomainName: "aws.acmuiuc.org" # CHANGE ME
+      ValidCorsOrigins: ["https://acm.illinois.edu"]
+      AadValidClientId: "251efa82-f589-42e1-9ebb-e214a4f40a0f"
+  EnvironmentToCidr:
+    dev:
+      SecurityGroupIds:
+        - sg-00443e61d39721a0d
+        - sg-0e99aa1c1e4e9e5b6
+      SubnetIds:
+        - subnet-0cd2b887e61f6edd8
+        - subnet-065857a2bdf3a51aa
+        - subnet-09e12f156435e4cc9
+    prod:
+      SecurityGroupIds:
+        - sg-066e3ae1d05e70fcd
+      SubnetIds:
+        - subnet-0cf33aff80b81eb1b
+        - subnet-0cbe89f6ab2665610
+
+Resources:
+  AppSecurityRoles:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./iam.yml
+      Parameters:
+        RunEnvironment: !Ref RunEnvironment
+        LambdaFunctionName: !Sub ${ApplicationPrefix}-lambda
+
+  AppLogGroups:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./logs.yml
+      Parameters:
+        LambdaFunctionName: !Sub ${ApplicationPrefix}-lambda
+        LogRetentionDays: !FindInMap [General, !Ref RunEnvironment, LogRetentionDays]
+
+  AppApiLambdaFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - AppLogGroups
+    Properties:
+      CodeUri: ../dist/
+      AutoPublishAlias: live
+      Runtime: nodejs20.x
+      Description: !Sub "${ApplicationFriendlyName} API Lambda"
+      FunctionName: !Sub ${ApplicationPrefix}-lambda
+      Handler: lambda.handler
+      MemorySize: 512
+      Role: !GetAtt AppSecurityRoles.Outputs.MainFunctionRoleArn
+      Timeout: 60
+      Environment:
+        Variables:
+          RunEnvironment: !Ref RunEnvironment
+          ValidCorsOrigins: !Join [",", !FindInMap [ApiGwConfig, !Ref RunEnvironment, ValidCorsOrigins]]
+      VpcConfig: 
+        Ipv6AllowedForDualStack: !If [ShouldAttachVpc, True, !Ref AWS::NoValue]
+        SecurityGroupIds: !If [ShouldAttachVpc, !FindInMap [EnvironmentToCidr, !Ref RunEnvironment, SecurityGroupIds], !Ref AWS::NoValue]
+        SubnetIds: !If [ShouldAttachVpc, !FindInMap [EnvironmentToCidr, !Ref RunEnvironment, SubnetIds], !Ref AWS::NoValue]
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AppApiGateway
+            Path: /{proxy+}
+            Method: ANY
+
+  AppApiGateway:
+    Type: AWS::Serverless::Api
+    DependsOn: 
+      - AppApiLambdaFunction
+    Properties:
+      Name: !Sub ${ApplicationPrefix}-gateway
+      Description: !Sub "${ApplicationFriendlyName} API Gateway"
+      AlwaysDeploy: True
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ../docs/swagger.yml
+      Domain: 
+        DomainName: !Sub
+          - "${ApplicationPrefix}.${BaseDomainName}"
+          - BaseDomainName: !FindInMap
+            - ApiGwConfig
+            - !Ref RunEnvironment
+            - ApiDomainName
+        CertificateArn: !FindInMap [ApiGwConfig, !Ref RunEnvironment, ApiCertificateArn]
+        Route53:
+          HostedZoneId: !FindInMap [ApiGwConfig, !Ref RunEnvironment, HostedZoneId]
+      StageName: default
+      Cors:
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date'"
+        AllowOrigin: "'*'"
+        MaxAge: "'300'"
+
+  APIDefault4XXResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref AppApiGateway
+      ResponseType: DEFAULT_4XX
+      StatusCode: "404"
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      ResponseTemplates:
+        application/json: "{\"error\": true, \"message\": \"Resource not found. Check your URL or contact support.\"}"
+
+  APIAccessDeniedResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref AppApiGateway
+      ResponseType: ACCESS_DENIED
+      StatusCode: "403"
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      ResponseTemplates:
+        application/json: "{\"error\": true, \"message\": \"Access denied. Perhaps reauthenticate and try again?\"}"
+
+  APIUnauthorizedResponse:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref AppApiGateway
+      ResponseType: UNAUTHORIZED
+      StatusCode: "401"
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      ResponseTemplates:
+        application/json: "{\"error\": true, \"message\": \"Request could not be authenticated. Perhaps reauthenticate and try again?\"}"
+
+  AppApiGatewayLatencyAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Condition: IsProd
+    Properties:
+      AlarmName: !Sub ${ApplicationPrefix}-gateway-latency-high
+      AlarmDescription: !Sub 'Alarm if ${ApplicationPrefix} API gateway latency is > 3s.'
+      Namespace: 'AWS/ApiGateway'
+      MetricName: 'Latency'
+      Statistic: 'Average'
+      Period: '60'
+      EvaluationPeriods: '1'
+      ComparisonOperator: 'GreaterThanThreshold'
+      Threshold: '3000'
+      AlarmActions:
+        - !Ref AlertSNSArn
+      Dimensions:
+        - Name: 'ApiName'
+          Value: !Sub ${ApplicationPrefix}-gateway
+
+  AppApiGateway5XXErrorAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Condition: IsProd
+    Properties:
+      AlarmName: !Sub ${ApplicationPrefix}-gateway-5xx
+      AlarmDescription: !Sub 'Alarm if ${ApplicationPrefix} API gateway 5XX errors are detected.'
+      Namespace: 'AWS/ApiGateway'
+      MetricName: '5XXError'
+      Statistic: 'Average'
+      Period: '60'
+      EvaluationPeriods: '1'
+      ComparisonOperator: 'GreaterThanThreshold'
+      Threshold: '2'
+      AlarmActions:
+        - !Ref AlertSNSArn
+      Dimensions:
+        - Name: 'ApiName'
+          Value: !Sub ${ApplicationPrefix}-gateway
+
+  APILambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AppApiLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+        - ''
+        - - 'arn:aws:execute-api:'
+          - !Ref AWS::Region
+          - ":"
+          - !Ref AWS::AccountId
+          - ":"
+          - !Ref AppApiGateway
+          - "/*/*/*"

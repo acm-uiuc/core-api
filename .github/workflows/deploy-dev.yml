@@ -1,0 +1,65 @@
+name: Deploy all resources to DEV
+run-name: DEV deploy - @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+jobs:
+  test-unit:
+    runs-on: ubuntu-latest
+    name: Run Unit Tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11 for testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Set up Node for testing
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - name: Run unit testing
+        run: make test_unit
+  deploy-dev:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.event.repository.name }}-dev
+      cancel-in-progress: false
+    environment: "AWS DEV"
+    name: Deploy to AWS DEV
+    needs:
+      - test-unit
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Set up Node 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - run: make deploy_dev
+  test:
+    runs-on: ubuntu-latest
+    name: Run Live Integration Tests
+    needs:
+      - deploy-dev
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11 for testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Run live testing
+        run: make test_live_integration

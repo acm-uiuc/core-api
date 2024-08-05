@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Infra Sample API using AWS Lambda and Python
+Description: Events API v2
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:

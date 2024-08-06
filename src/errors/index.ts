@@ -93,7 +93,6 @@ export class DatabaseInsertError extends BaseError<"DatabaseInsertError"> {
   }
 }
 
-
 export class DatabaseFetchError extends BaseError<"DatabaseFetchError"> {
   constructor({ message }: { message: string }) {
     super({

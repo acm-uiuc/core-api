@@ -26,7 +26,7 @@ const requestBodySchema = z.object({
   locationLink: z.optional(z.string().url()),
   repeats: z.optional(z.enum(repeatOptions)),
   host: z.enum(OrganizationList),
-  featured: z.boolean().default(false)
+  featured: z.boolean().default(false),
 });
 const requestJsonSchema = zodToJsonSchema(requestBodySchema);
 type EventPostRequest = z.infer<typeof requestBodySchema>;
@@ -60,7 +60,9 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     },
     async (request, reply) => {
       try {
-        const entryUUID = ((request.params) as any).id || randomUUID().toString();
+        const entryUUID =
+          (request.params as Record<string, string>).id ||
+          randomUUID().toString();
         await dynamoClient.send(
           new PutItemCommand({
             TableName: config.DYNAMO_TABLE_NAME,
@@ -97,7 +99,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         const response = await dynamoClient.send(
           new ScanCommand({ TableName: config.DYNAMO_TABLE_NAME }),
         );
-        const items = response.Items?.map(item => unmarshall(item))
+        const items = response.Items?.map((item) => unmarshall(item));
         reply.send(getResponseBodySchema.parse(items));
       } catch (e: unknown) {
         if (e instanceof Error) {

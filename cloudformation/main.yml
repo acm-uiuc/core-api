@@ -119,30 +119,11 @@ Resources:
       Name: !Sub ${ApplicationPrefix}-gateway
       Description: !Sub "${ApplicationFriendlyName} API Gateway"
       AlwaysDeploy: True
-      DefinitionBody: 
-        /{proxy+}:
-          x-amazon-apigateway-any-method:
-            produces:
-              - "application/json"
-            responses: {}
-            x-amazon-apigateway-integration:
-              uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ApplicationPrefix}-lambda/invocations
-              responses:
-                default:
-                  statusCode: "200"
-              passthroughBehavior: "when_no_match"
-              httpMethod: "POST"
-              type: "aws_proxy"
-        basePath: "/"
-        schemes:
-          - "https"
-        x-amazon-apigateway-policy:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: "Allow"
-              Principal: "*"
-              Action: "execute-api:Invoke"
-              Resource: "execute-api:/*"
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./phony-swagger.yml
       Domain: 
         DomainName: !Sub
           - "${ApplicationPrefix}.${BaseDomainName}"

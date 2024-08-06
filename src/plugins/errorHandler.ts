@@ -1,21 +1,29 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import {
   BaseError,
   InternalServerError,
   NotFoundError,
+  ValidationError,
 } from "../errors/index.js";
 
 const errorHandlerPlugin = fp(async (fastify) => {
   fastify.setErrorHandler(
     (err: unknown, request: FastifyRequest, reply: FastifyReply) => {
-      let finalErr = new InternalServerError();
+      let finalErr;
       if (err instanceof BaseError) {
         finalErr = err;
+      } else if (
+        (err as FastifyError).validation ||
+        (err as Error).name === "BadRequestError"
+      ) {
+        finalErr = new ValidationError({
+          message: (err as FastifyError).message,
+        });
       }
-      if (err instanceof BaseError) {
+      if (finalErr && finalErr instanceof BaseError) {
         request.log.error(
-          { errId: err.id, errName: err.name },
+          { errId: finalErr.id, errName: finalErr.name },
           finalErr.toString(),
         );
       } else if (err instanceof Error) {
@@ -25,6 +33,9 @@ const errorHandlerPlugin = fp(async (fastify) => {
         );
       } else {
         request.log.error("Native unhandled error: response sent to client.");
+      }
+      if (!finalErr) {
+        finalErr = new InternalServerError();
       }
       reply.status(finalErr.httpStatusCode).type("application/json").send({
         error: true,

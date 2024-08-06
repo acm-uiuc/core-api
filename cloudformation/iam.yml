@@ -54,6 +54,15 @@ Resources:
               Resource:
                 - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:infra-events-api-config*
         PolicyName: lambda-db-secrets
+      - PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Action:
+                - dynamodb:*
+              Effect: Allow
+              Resource:
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-api-records
+        PolicyName: lambda-dynamo
 Outputs:
   MainFunctionRoleArn:
     Description: Main API IAM role ARN

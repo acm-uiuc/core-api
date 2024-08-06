@@ -48,7 +48,7 @@ const dynamoClient = new DynamoDBClient({
 
 const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.post<{ Body: EventPostRequest }>(
-    "/",
+    "/:id?",
     {
       schema: {
         body: requestJsonSchema,
@@ -60,7 +60,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     },
     async (request, reply) => {
       try {
-        const entryUUID = randomUUID().toString();
+        const entryUUID = ((request.params) as any).id || randomUUID().toString();
         await dynamoClient.send(
           new PutItemCommand({
             TableName: config.DYNAMO_TABLE_NAME,
@@ -90,9 +90,6 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     {
       schema: {
         response: { 200: getResponseJsonSchema },
-      },
-      onRequest: async (request, reply) => {
-        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
       },
     },
     async (request, reply) => {

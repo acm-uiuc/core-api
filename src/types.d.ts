@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyInstance, FastifyReply } from "fastify";
 import { AppRoles, RunEnvironment } from "./roles.ts";
+import { AadToken } from "./plugins/auth.ts";
 declare module "fastify" {
   interface FastifyInstance {
     authenticate: (
@@ -16,5 +17,6 @@ declare module "fastify" {
   interface FastifyRequest {
     startTime: number;
     username?: string;
+    tokenPayload?: AadToken;
   }
 }

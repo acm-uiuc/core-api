@@ -1,28 +1,39 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
-import { BaseError, InternalServerError, UnauthenticatedError, UnauthorizedError } from "../errors/index.js";
-import { AppRoles, RunEnvironment, runEnvironments } from "../roles.js";
-import jwksClient, {JwksClient} from "jwks-rsa";
+import jwksClient from "jwks-rsa";
 import jwt, { Algorithm } from "jsonwebtoken";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import { AppRoles, RunEnvironment } from "../roles.js";
+import {
+  BaseError,
+  InternalServerError,
+  UnauthenticatedError,
+  UnauthorizedError,
+} from "../errors/index.js";
 
+const CONFIG_SECRET_NAME = "infra-events-api-config" as const;
 const GroupRoleMapping: Record<RunEnvironment, Record<string, AppRoles[]>> = {
-  "prod": {"48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.MANAGER]}, // Infra Chairs
-  "dev": {"48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.MANAGER]}, // Infra Chairs
+  prod: { "48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.MANAGER] }, // Infra Chairs
+  dev: {
+    "48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.MANAGER], // Infra Chairs
+    "0": [AppRoles.MANAGER], // Dummy Group for development only
+  },
 };
 
-
 function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
-  let _intersection = new Set<T>();
-  for (let elem of setB) {
-      if (setA.has(elem)) {
-          _intersection.add(elem);
-      }
+  const _intersection = new Set<T>();
+  for (const elem of setB) {
+    if (setA.has(elem)) {
+      _intersection.add(elem);
+    }
   }
   return _intersection;
 }
 
-
-type AadToken = {
+export type AadToken = {
   aud: string;
   iss: string;
   iat: number;
@@ -46,7 +57,29 @@ type AadToken = {
   unique_name: string;
   uti: string;
   ver: string;
-}
+};
+const smClient = new SecretsManagerClient({
+  region: process.env.AWS_REGION || "us-east-1",
+});
+
+const getSecretValue = async (
+  secretId: string,
+): Promise<Record<string, string | number | boolean> | null> => {
+  const data = await smClient.send(
+    new GetSecretValueCommand({ SecretId: secretId }),
+  );
+  if (!data.SecretString) {
+    return null;
+  }
+  try {
+    return JSON.parse(data.SecretString) as Record<
+      string,
+      string | number | boolean
+    >;
+  } catch {
+    return null;
+  }
+};
 
 const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.decorate(
@@ -57,57 +90,114 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
       validRoles: AppRoles[],
     ): Promise<void> {
       try {
-        const AadClientId = process.env.AadValidClientId;
-        if (!AadClientId) {
-          request.log.error("Server is misconfigured, could not find `AadValidClientId`!")
-          throw new InternalServerError({message: "Server authentication is misconfigured, please contact your administrator."});
-        }
-        const authHeader = request.headers['authorization']
+        const authHeader = request.headers.authorization;
         if (!authHeader) {
-          throw new UnauthenticatedError({"message": "Did not find bearer token in expected header."})
+          throw new UnauthenticatedError({
+            message: "Did not find bearer token in expected header.",
+          });
         }
         const [method, token] = authHeader.split(" ");
-        if (method != "Bearer") {
-          throw new UnauthenticatedError({"message": `Did not find bearer token, found ${method} token.`})
+        if (method !== "Bearer") {
+          throw new UnauthenticatedError({
+            message: `Did not find bearer token, found ${method} token.`,
+          });
         }
-        const decoded = jwt.decode(token, {complete: true})
-        const header = decoded?.header;
-        if (!header) {
-          throw new UnauthenticatedError({"message": "Could not decode token header."});
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        const decoded = jwt.decode(token, { complete: true }) as Record<
+          string,
+          any
+        >;
+        let signingKey = "";
+        let verifyOptions = {};
+        if (decoded?.payload.iss === "custom_jwt") {
+          if (fastify.runEnvironment === "prod") {
+            throw new UnauthenticatedError({
+              message: "Custom JWTs cannot be used in Prod environment.",
+            });
+          }
+          signingKey =
+            process.env.JwtSigningKey ||
+            (((await getSecretValue(CONFIG_SECRET_NAME)) || { jwt_key: "" })
+              .jwt_key as string) ||
+            "";
+          if (signingKey === "") {
+            throw new UnauthenticatedError({
+              message: "Invalid token.",
+            });
+          }
+          verifyOptions = { algorithms: ["HS256" as Algorithm] };
+        } else {
+          const AadClientId = process.env.AadValidClientId;
+          if (!AadClientId) {
+            request.log.error(
+              "Server is misconfigured, could not find `AadValidClientId`!",
+            );
+            throw new InternalServerError({
+              message:
+                "Server authentication is misconfigured, please contact your administrator.",
+            });
+          }
+          const header = decoded?.header;
+          if (!header) {
+            throw new UnauthenticatedError({
+              message: "Could not decode token header.",
+            });
+          }
+          verifyOptions = {
+            algorithms: ["RS256" as Algorithm],
+            header: decoded?.header,
+            audience: `api://${AadClientId}`,
+          };
+          const client = jwksClient({
+            jwksUri: "https://login.microsoftonline.com/common/discovery/keys",
+          });
+          signingKey = (await client.getSigningKey(header.kid)).getPublicKey();
         }
-        const verifyOptions = {algorithms: ['RS256' as Algorithm], header: decoded?.header, audience: `api://${AadClientId}`}
-        const client = jwksClient({
-          jwksUri: 'https://login.microsoftonline.com/common/discovery/keys'
-        });
-        const signingKey = (await client.getSigningKey(header.kid)).getPublicKey();
-        const verifiedTokenData = jwt.verify(token, signingKey, verifyOptions) as AadToken;
+
+        const verifiedTokenData = jwt.verify(
+          token,
+          signingKey,
+          verifyOptions,
+        ) as AadToken;
+        request.tokenPayload = verifiedTokenData;
         request.username = verifiedTokenData.email;
         const userRoles = new Set([] as AppRoles[]);
-        const expectedRoles = new Set(validRoles)
+        const expectedRoles = new Set(validRoles);
         if (verifiedTokenData.groups) {
           for (const group of verifiedTokenData.groups) {
             if (!GroupRoleMapping[fastify.runEnvironment][group]) {
               continue;
             }
-            for (const role of GroupRoleMapping[fastify.runEnvironment][group]) {
+            for (const role of GroupRoleMapping[fastify.runEnvironment][
+              group
+            ]) {
               userRoles.add(role);
             }
           }
         } else {
-          throw new UnauthenticatedError({message: "Could not find groups in token."})
+          throw new UnauthenticatedError({
+            message: "Could not find groups in token.",
+          });
         }
         if (intersection(userRoles, expectedRoles).size === 0) {
-          throw new UnauthorizedError({message: "User does not have the privileges for this task."})
+          throw new UnauthorizedError({
+            message: "User does not have the privileges for this task.",
+          });
         }
       } catch (err: unknown) {
         if (err instanceof BaseError) {
           throw err;
         }
+        if (err instanceof jwt.TokenExpiredError) {
+          throw new UnauthenticatedError({
+            message: "Token has expired.",
+          });
+        }
         if (err instanceof Error) {
-          request.log.error("Failed to verify JWT: " + err.toString())
+          request.log.error(`Failed to verify JWT: ${err.toString()}`);
         }
         throw new UnauthenticatedError({
-          message: "Could not authenticate from token.",
+          message: "Invalid token.",
         });
       }
     },

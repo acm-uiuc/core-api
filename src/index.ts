@@ -28,10 +28,12 @@ async function init() {
   await app.register(FastifyAuthProvider);
   await app.register(errorHandlerPlugin);
   if (!process.env.RunEnvironment) {
-    process.env.RunEnvironment = 'dev';
+    process.env.RunEnvironment = "dev";
   }
-  if (!(runEnvironments.includes(process.env.RunEnvironment as RunEnvironment))) {
-    throw new InternalServerError({message: `Invalid run environment ${app.runEnvironment}.`})
+  if (!runEnvironments.includes(process.env.RunEnvironment as RunEnvironment)) {
+    throw new InternalServerError({
+      message: `Invalid run environment ${app.runEnvironment}.`,
+    });
   }
   app.runEnvironment = process.env.RunEnvironment as RunEnvironment;
   app.addHook("onRequest", (req, _, done) => {

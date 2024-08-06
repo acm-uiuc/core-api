@@ -24,8 +24,9 @@ export abstract class BaseError<T extends string> extends Error {
       Error.captureStackTrace(this, this.constructor);
     }
   }
+
   toString() {
-    return `Error ${this.id} (${this.name}): ${this.message}\n\n${this.stack}`
+    return `Error ${this.id} (${this.name}): ${this.message}\n\n${this.stack}`;
   }
 }
 
@@ -47,19 +48,20 @@ export class UnauthenticatedError extends BaseError<"UnauthenticatedError"> {
 }
 
 export class InternalServerError extends BaseError<"InternalServerError"> {
-  constructor({message}: {message?: string} = {}) {
+  constructor({ message }: { message?: string } = {}) {
     super({
       name: "InternalServerError",
       id: 100,
-      message: message || "An internal server error occurred. Please try again or contact support.",
+      message:
+        message ||
+        "An internal server error occurred. Please try again or contact support.",
       httpStatusCode: 500,
     });
   }
 }
 
-
 export class NotFoundError extends BaseError<"NotFoundError"> {
-  constructor({endpointName}: {endpointName: string}) {
+  constructor({ endpointName }: { endpointName: string }) {
     super({
       name: "NotFoundError",
       id: 103,

@@ -5,6 +5,8 @@ import FastifyAuthProvider from "@fastify/auth";
 import fastifyAuthPlugin from "./plugins/auth.js";
 import protectedRoute from "./routes/protected.js";
 import errorHandlerPlugin from "./plugins/errorHandler.js";
+import { RunEnvironment, runEnvironments } from "./roles.js";
+import { InternalServerError } from "./errors/index.js";
 
 const now = () => Date.now();
 
@@ -25,7 +27,13 @@ async function init() {
   await app.register(fastifyAuthPlugin);
   await app.register(FastifyAuthProvider);
   await app.register(errorHandlerPlugin);
-  app.runEnvironment = process.env.RunEnvironment ?? "dev";
+  if (!process.env.RunEnvironment) {
+    process.env.RunEnvironment = 'dev';
+  }
+  if (!(runEnvironments.includes(process.env.RunEnvironment as RunEnvironment))) {
+    throw new InternalServerError({message: `Invalid run environment ${app.runEnvironment}.`})
+  }
+  app.runEnvironment = process.env.RunEnvironment as RunEnvironment;
   app.addHook("onRequest", (req, _, done) => {
     req.startTime = now();
     req.log.info({ url: req.raw.url }, "received request");

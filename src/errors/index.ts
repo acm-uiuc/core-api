@@ -47,11 +47,11 @@ export class UnauthenticatedError extends BaseError<"UnauthenticatedError"> {
 }
 
 export class InternalServerError extends BaseError<"InternalServerError"> {
-  constructor() {
+  constructor({message}: {message?: string} = {}) {
     super({
       name: "InternalServerError",
       id: 100,
-      message: "An internal server error occurred. Please try again or contact support.",
+      message: message || "An internal server error occurred. Please try again or contact support.",
       httpStatusCode: 500,
     });
   }

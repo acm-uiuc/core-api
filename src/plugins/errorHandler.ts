@@ -1,7 +1,6 @@
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { BaseError, InternalServerError, NotFoundError } from '../errors/index.js';
-import { request } from 'http';
 
 const errorHandlerPlugin = fp(async(fastify) => {
     fastify.setErrorHandler((err: unknown, request: FastifyRequest, reply: FastifyReply) => {

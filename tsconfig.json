@@ -4,4 +4,7 @@
       "module": "Node16",
       "outDir": "dist",
   },
+  "ts-node": {
+    "esm": true
+  },
 }

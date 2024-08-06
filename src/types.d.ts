@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyInstance, FastifyReply } from "fastify";
-import { AppRoles } from "./roles.ts";
+import { AppRoles, RunEnvironment } from "./roles.ts";
 declare module "fastify" {
   interface FastifyInstance {
     authenticate: (
@@ -11,9 +11,10 @@ declare module "fastify" {
       reply: FastifyReply,
       validRoles: AppRoles[],
     ) => Promise<void>;
-    runEnvironment: string;
+    runEnvironment: RunEnvironment;
   }
   interface FastifyRequest {
     startTime: number;
+    username?: string;
   }
 }

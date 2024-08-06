@@ -3,23 +3,30 @@ import { AppRoles } from "../roles.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { OrganizationList } from "../orgs.js";
-import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { marshall } from "@aws-sdk/util-dynamodb";
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  ScanCommand,
+} from "@aws-sdk/client-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import config from "../config.js";
-import { DatabaseInsertError } from "../errors/index.js";
+import { DatabaseFetchError, DatabaseInsertError } from "../errors/index.js";
 import { randomUUID } from "crypto";
+
+// POST
 
 const repeatOptions = ["weekly", "biweekly"] as const;
 
 const requestBodySchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
-  start: z.string().datetime(),
-  end: z.optional(z.string().datetime()),
+  start: z.string(),
+  end: z.optional(z.string()),
   location: z.string(),
   locationLink: z.optional(z.string().url()),
   repeats: z.optional(z.enum(repeatOptions)),
   host: z.enum(OrganizationList),
+  featured: z.boolean().default(false)
 });
 const requestJsonSchema = zodToJsonSchema(requestBodySchema);
 type EventPostRequest = z.infer<typeof requestBodySchema>;
@@ -31,11 +38,15 @@ const responseJsonSchema = zodToJsonSchema(
   }),
 );
 
+// GET
+const getResponseBodySchema = z.array(requestBodySchema);
+const getResponseJsonSchema = zodToJsonSchema(getResponseBodySchema);
+
 const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
 });
 
-const createEvent: FastifyPluginAsync = async (fastify, _options) => {
+const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.post<{ Body: EventPostRequest }>(
     "/",
     {
@@ -50,10 +61,14 @@ const createEvent: FastifyPluginAsync = async (fastify, _options) => {
     async (request, reply) => {
       try {
         const entryUUID = randomUUID().toString();
-        const dynamoResponse = await dynamoClient.send(
+        await dynamoClient.send(
           new PutItemCommand({
             TableName: config.DYNAMO_TABLE_NAME,
-            Item: marshall({ ...request.body, id: entryUUID }),
+            Item: marshall({
+              ...request.body,
+              id: entryUUID,
+              createdBy: request.username,
+            }),
           }),
         );
         reply.send({
@@ -70,6 +85,33 @@ const createEvent: FastifyPluginAsync = async (fastify, _options) => {
       }
     },
   );
+  fastify.get<{ Body: undefined }>(
+    "/",
+    {
+      schema: {
+        response: { 200: getResponseJsonSchema },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
+      },
+    },
+    async (request, reply) => {
+      try {
+        const response = await dynamoClient.send(
+          new ScanCommand({ TableName: config.DYNAMO_TABLE_NAME }),
+        );
+        const items = response.Items?.map(item => unmarshall(item))
+        reply.send(getResponseBodySchema.parse(items));
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to get from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseFetchError({
+          message: "Failed to get events from Dynamo table.",
+        });
+      }
+    },
+  );
 };
 
-export default createEvent;
+export default eventsPlugin;

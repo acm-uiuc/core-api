@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 
+const username = process.env.JWTGEN_USERNAME || 'infra@acm.illinois.edu'
 const payload = {
     aud: "custom_jwt",
     iss: "custom_jwt",
@@ -11,7 +12,7 @@ const payload = {
     amr: ["pwd"],
     appid: "your-app-id",
     appidacr: "1",
-    email: "infra@acm.illinois.edu",
+    email: username,
     groups: ["0"],
     idp: "https://login.microsoftonline.com",
     ipaddr: "192.168.1.1",
@@ -21,11 +22,13 @@ const payload = {
     scp: "user_impersonation",
     sub: "subject",
     tid: "tenant-id",
-    unique_name: "infra@acm.illinois.edu",
+    unique_name: username,
     uti: "uti-value",
     ver: "1.0"
 };
 
 const secretKey = process.env.JwtSigningKey;
 const token = jwt.sign(payload, secretKey, { algorithm: 'HS256' });
+console.log(`USERNAME=${username}`)
+console.log('=====================')
 console.log(token)

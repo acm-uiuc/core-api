@@ -7,7 +7,7 @@ import protectedRoute from "./routes/protected.js";
 import errorHandlerPlugin from "./plugins/errorHandler.js";
 import { RunEnvironment, runEnvironments } from "./roles.js";
 import { InternalServerError } from "./errors/index.js";
-import createEvent from "./routes/event.js";
+import eventsPlugin from "./routes/events.js";
 
 const now = () => Date.now();
 
@@ -58,7 +58,7 @@ async function init() {
   await app.register(
     async (api, _options) => {
       api.register(protectedRoute, { prefix: "/protected" });
-      api.register(createEvent, { prefix: "/event" });
+      api.register(eventsPlugin, { prefix: "/events" });
     },
     { prefix: "/api/v1" },
   );

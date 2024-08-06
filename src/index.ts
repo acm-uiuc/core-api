@@ -8,7 +8,7 @@ import errorHandlerPlugin from "./plugins/errorHandler.js";
 import { RunEnvironment, runEnvironments } from "./roles.js";
 import { InternalServerError } from "./errors/index.js";
 import eventsPlugin from "./routes/events.js";
-import cors from '@fastify/cors'
+import cors from "@fastify/cors";
 
 const now = () => Date.now();
 
@@ -63,10 +63,10 @@ async function init() {
     },
     { prefix: "/api/v1" },
   );
-  await app.register(cors, { 
-    origin: (process.env.ValidCorsOrigins || "*").split(',')
-  })
-  
+  await app.register(cors, {
+    origin: (process.env.ValidCorsOrigins || "*").split(","),
+  });
+
   return app;
 }
 

@@ -54,6 +54,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - run: make deploy_dev
+        env:
+          HUSKY: "0"
   test:
     runs-on: ubuntu-latest
     name: Run Live Integration Tests

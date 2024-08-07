@@ -17,18 +17,26 @@ import { randomUUID } from "crypto";
 
 const repeatOptions = ["weekly", "biweekly"] as const;
 
-const requestBodySchema = z.object({
+const baseBodySchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   start: z.string(),
   end: z.optional(z.string()),
   location: z.string(),
   locationLink: z.optional(z.string().url()),
-  repeats: z.optional(z.enum(repeatOptions)),
   host: z.enum(OrganizationList),
   featured: z.boolean().default(false),
 });
-const requestJsonSchema = zodToJsonSchema(requestBodySchema);
+
+const requestBodySchema = baseBodySchema
+  .extend({
+    repeats: z.optional(z.enum(repeatOptions)),
+    repeatEnds: z.string().optional(),
+  })
+  .refine((data) => (data.repeatEnds ? data.repeats !== undefined : true), {
+    message: "repeats is required when repeatEnds is defined",
+  });
+
 type EventPostRequest = z.infer<typeof requestBodySchema>;
 
 const responseJsonSchema = zodToJsonSchema(
@@ -51,8 +59,10 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     "/:id?",
     {
       schema: {
-        body: requestJsonSchema,
         response: { 200: responseJsonSchema },
+      },
+      preValidation: async (request, reply) => {
+        await fastify.zodValidateBody(request, reply, requestBodySchema);
       },
       onRequest: async (request, reply) => {
         await fastify.authorize(request, reply, [AppRoles.MANAGER]);

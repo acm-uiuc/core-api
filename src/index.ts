@@ -9,6 +9,7 @@ import { RunEnvironment, runEnvironments } from "./roles.js";
 import { InternalServerError } from "./errors/index.js";
 import eventsPlugin from "./routes/events.js";
 import cors from "@fastify/cors";
+import fastifyZodValidationPlugin from "./plugins/validate.js";
 
 const now = () => Date.now();
 
@@ -27,6 +28,7 @@ async function init() {
     },
   });
   await app.register(fastifyAuthPlugin);
+  await app.register(fastifyZodValidationPlugin);
   await app.register(FastifyAuthProvider);
   await app.register(errorHandlerPlugin);
   if (!process.env.RunEnvironment) {
@@ -73,10 +75,10 @@ async function init() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   // local development
   const app = await init();
-  app.listen({ port: 3000 }, (err) => {
+  app.listen({ port: 8080 }, (err) => {
     /* eslint no-console: ["error", {"allow": ["log", "error"]}] */
     if (err) console.error(err);
-    console.log("Server listening on 3000");
+    console.log("Server listening on 8080");
   });
 }
 export default init;

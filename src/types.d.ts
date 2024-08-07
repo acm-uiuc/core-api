@@ -12,6 +12,11 @@ declare module "fastify" {
       reply: FastifyReply,
       validRoles: AppRoles[],
     ) => Promise<void>;
+    zodValidateBody: (
+      request: FastifyRequest,
+      _reply: FastifyReply,
+      zodSchema: Zod.ZodTypeAny,
+    ) => Promise<void>;
     runEnvironment: RunEnvironment;
   }
   interface FastifyRequest {

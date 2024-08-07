@@ -15,6 +15,15 @@ import {
 } from "../errors/index.js";
 
 const CONFIG_SECRET_NAME = "infra-events-api-config" as const;
+const AzureRoleMapping: Record<RunEnvironment, Record<string, AppRoles[]>> = {
+  prod: {
+    "AutonomousWriters": [AppRoles.MANAGER]
+  },
+  dev: {
+    "AutonomousWriters": [AppRoles.MANAGER]
+  },
+}
+
 const GroupRoleMapping: Record<RunEnvironment, Record<string, AppRoles[]>> = {
   prod: {
     "48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.MANAGER], // Infra Chairs
@@ -63,6 +72,7 @@ export type AadToken = {
   unique_name: string;
   uti: string;
   ver: string;
+  roles?: string[];
 };
 const smClient = new SecretsManagerClient({
   region: process.env.AWS_REGION || "us-east-1",
@@ -181,9 +191,22 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
             }
           }
         } else {
-          throw new UnauthenticatedError({
-            message: "Could not find groups in token.",
-          });
+          if (verifiedTokenData.roles) {
+            for (const group of verifiedTokenData.roles) {
+              if (!AzureRoleMapping[fastify.runEnvironment][group]) {
+                continue;
+              }
+              for (const role of AzureRoleMapping[fastify.runEnvironment][
+                group
+              ]) {
+                userRoles.add(role);
+              }
+            }
+          } else {
+            throw new UnauthenticatedError({
+              message: "Could not find groups or roles in token.",
+            });
+          }
         }
         if (intersection(userRoles, expectedRoles).size === 0) {
           throw new UnauthorizedError({

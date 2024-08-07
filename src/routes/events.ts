@@ -125,7 +125,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         if (upcomingOnly) {
           parsedItems = parsedItems.filter((item) => {
             try {
-              if (!item.repeatEnds || item.repeatEnds === "never") {
+              if (item.repeats && !item.repeatEnds) {
                 return true;
               }
               if (!item.repeats) {

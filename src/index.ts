@@ -10,6 +10,7 @@ import { InternalServerError } from "./errors/index.js";
 import eventsPlugin from "./routes/events.js";
 import cors from "@fastify/cors";
 import fastifyZodValidationPlugin from "./plugins/validate.js";
+import { environmentConfig } from "./config.js";
 
 const now = () => Date.now();
 
@@ -66,7 +67,7 @@ async function init() {
     { prefix: "/api/v1" },
   );
   await app.register(cors, {
-    origin: (process.env.ValidCorsOrigins || "*").split(","),
+    origin: environmentConfig[app.runEnvironment].ValidCorsOrigins,
   });
 
   return app;

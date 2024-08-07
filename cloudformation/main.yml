@@ -39,14 +39,10 @@ Mappings:
       ApiCertificateArn: arn:aws:acm:us-east-1:427040638965:certificate/63ccdf0b-d2b5-44f0-b589-eceffb935c23
       HostedZoneId: Z04502822NVIA85WM2SML
       ApiDomainName: "aws.qa.acmuiuc.org"
-      ValidCorsOrigins: ["*"]
-      AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f"
     prod:
       ApiCertificateArn: arn:aws:acm:us-east-1:298118738376:certificate/6142a0e2-d62f-478e-bf15-5bdb616fe705
       HostedZoneId: Z05246633460N5MEB9DBF
       ApiDomainName: "aws.acmuiuc.org" # CHANGE ME
-      ValidCorsOrigins: ["https://acm.illinois.edu", "https://www.acm.illinois.edu"]
-      AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296"
   EnvironmentToCidr:
     dev:
       SecurityGroupIds:
@@ -97,8 +93,6 @@ Resources:
       Environment:
         Variables:
           RunEnvironment: !Ref RunEnvironment
-          ValidCorsOrigins: !Join [",", !FindInMap [ApiGwConfig, !Ref RunEnvironment, ValidCorsOrigins]]
-          AadValidClientId: !FindInMap [ApiGwConfig, !Ref RunEnvironment, AadValidClientId]
       VpcConfig: 
         Ipv6AllowedForDualStack: !If [ShouldAttachVpc, True, !Ref AWS::NoValue]
         SecurityGroupIds: !If [ShouldAttachVpc, !FindInMap [EnvironmentToCidr, !Ref RunEnvironment, SecurityGroupIds], !Ref AWS::NoValue]

@@ -18,7 +18,7 @@ export const SIGList = [
 ] as const;
 
 export const CommitteeList = [
-  "Infrastructure Committe",
+  "Infrastructure Committee",
   "Social Committee",
   "Mentorship Committee",
 ] as const;

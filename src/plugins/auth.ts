@@ -17,12 +17,12 @@ import {
 const CONFIG_SECRET_NAME = "infra-events-api-config" as const;
 const AzureRoleMapping: Record<RunEnvironment, Record<string, AppRoles[]>> = {
   prod: {
-    "AutonomousWriters": [AppRoles.MANAGER]
+    AutonomousWriters: [AppRoles.MANAGER],
   },
   dev: {
-    "AutonomousWriters": [AppRoles.MANAGER]
+    AutonomousWriters: [AppRoles.MANAGER],
   },
-}
+};
 
 const GroupRoleMapping: Record<RunEnvironment, Record<string, AppRoles[]>> = {
   prod: {

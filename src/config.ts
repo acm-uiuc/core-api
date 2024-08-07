@@ -13,6 +13,7 @@ type ConfigType = {
 type GenericConfigType = {
   DynamoTableName: string;
   ConfigSecretName: string;
+  UpcomingEventThresholdSeconds: number;
 };
 
 type EnvironmentConfigType = {
@@ -22,6 +23,7 @@ type EnvironmentConfigType = {
 const genericConfig: GenericConfigType = {
   DynamoTableName: "infra-events-api-records",
   ConfigSecretName: "infra-events-api-config",
+  UpcomingEventThresholdSeconds: 1800 // 30 mins
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

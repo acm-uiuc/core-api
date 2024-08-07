@@ -28,11 +28,11 @@ const errorHandlerPlugin = fp(async (fastify) => {
         );
       } else if (err instanceof Error) {
         request.log.error(
-          { errName: err.name },
+          { errName: err.name, errMessage: err.message },
           "Native unhandled error: response sent to client.",
         );
       } else {
-        request.log.error("Native unhandled error: response sent to client.");
+        request.log.error(`Native unhandled error: response sent to client`);
       }
       if (!finalErr) {
         finalErr = new InternalServerError();

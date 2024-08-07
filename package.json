@@ -45,6 +45,7 @@
     "fastify-plugin": "^4.5.1",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
+    "moment-timezone": "^0.5.45",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2",
     "zod-validation-error": "^3.3.1"

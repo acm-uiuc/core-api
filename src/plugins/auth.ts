@@ -59,7 +59,7 @@ export type AadToken = {
   amr: string[];
   appid: string;
   appidacr: string;
-  email: string;
+  email?: string;
   groups?: string[];
   idp: string;
   ipaddr: string;
@@ -176,7 +176,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           verifyOptions,
         ) as AadToken;
         request.tokenPayload = verifiedTokenData;
-        request.username = verifiedTokenData.email;
+        request.username = verifiedTokenData.email || verifiedTokenData.sub;
         const userRoles = new Set([] as AppRoles[]);
         const expectedRoles = new Set(validRoles);
         if (verifiedTokenData.groups) {

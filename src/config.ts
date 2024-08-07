@@ -23,7 +23,7 @@ type EnvironmentConfigType = {
 const genericConfig: GenericConfigType = {
   DynamoTableName: "infra-events-api-records",
   ConfigSecretName: "infra-events-api-config",
-  UpcomingEventThresholdSeconds: 1800 // 30 mins
+  UpcomingEventThresholdSeconds: 1800, // 30 mins
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {
@@ -35,8 +35,11 @@ const environmentConfig: EnvironmentConfigType = {
       "0": [AppRoles.MANAGER], // Dummy Group for development only
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.MANAGER] },
-    ValidCorsOrigins: ['http://localhost:3000', /\.acmuiuc\.\.pages\.dev$/, 'https://acmuiuc.pages.dev'],
-    AadValidClientId: '39c28870-94e4-47ee-b4fb-affe0bf96c9f'
+    ValidCorsOrigins: [
+      "http://localhost:3000",
+      /\.acmuiuc\.\.pages\.dev$/,
+    ],
+    AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",
   },
   prod: {
     GroupRoleMapping: {
@@ -45,8 +48,12 @@ const environmentConfig: EnvironmentConfigType = {
       "ad81254b-4eeb-4c96-8191-3acdce9194b1": [AppRoles.MANAGER], // Exec
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.MANAGER] },
-    ValidCorsOrigins: ['https:///acm.illinois.edu', 'https:///www.acm.illinois.edu'],
-    AadValidClientId: '5e08cf0f-53bb-4e09-9df2-e9bdc3467296'
+    ValidCorsOrigins: [
+      "https:///acm.illinois.edu",
+      "https:///www.acm.illinois.edu",
+      /\.acmuiuc\.\.pages\.dev$/,
+    ],
+    AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296",
   },
 } as const;
 

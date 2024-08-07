@@ -13,7 +13,7 @@ import {
   UnauthenticatedError,
   UnauthorizedError,
 } from "../errors/index.js";
-import { environmentConfig, genericConfig } from "../config.js";
+import { genericConfig } from "../config.js";
 
 function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
   const _intersection = new Set<T>();
@@ -159,35 +159,31 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
         request.username = verifiedTokenData.email || verifiedTokenData.sub;
         const userRoles = new Set([] as AppRoles[]);
         const expectedRoles = new Set(validRoles);
-        if (verifiedTokenData.groups) {
+        if (
+          verifiedTokenData.groups &&
+          fastify.environmentConfig.GroupRoleMapping
+        ) {
           for (const group of verifiedTokenData.groups) {
-            if (
-              !environmentConfig[fastify.runEnvironment]["GroupRoleMapping"][
+            if (fastify.environmentConfig["GroupRoleMapping"][group]) {
+              for (const role of fastify.environmentConfig["GroupRoleMapping"][
                 group
-              ]
-            ) {
-              continue;
-            }
-            for (const role of environmentConfig[fastify.runEnvironment][
-              "GroupRoleMapping"
-            ][group]) {
-              userRoles.add(role);
+              ]) {
+                userRoles.add(role);
+              }
             }
           }
         } else {
-          if (verifiedTokenData.roles) {
+          if (
+            verifiedTokenData.roles &&
+            fastify.environmentConfig.AzureRoleMapping
+          ) {
             for (const group of verifiedTokenData.roles) {
-              if (
-                !environmentConfig[fastify.runEnvironment]["AzureRoleMapping"][
-                  group
-                ]
-              ) {
-                continue;
-              }
-              for (const role of environmentConfig[fastify.runEnvironment][
-                "AzureRoleMapping"
-              ][group]) {
-                userRoles.add(role);
+              if (fastify.environmentConfig["AzureRoleMapping"][group]) {
+                for (const role of fastify.environmentConfig[
+                  "AzureRoleMapping"
+                ][group]) {
+                  userRoles.add(role);
+                }
               }
             }
           } else {

@@ -41,6 +41,7 @@ async function init() {
     });
   }
   app.runEnvironment = process.env.RunEnvironment as RunEnvironment;
+  app.environmentConfig = environmentConfig[app.runEnvironment];
   app.addHook("onRequest", (req, _, done) => {
     req.startTime = now();
     req.log.info({ url: req.raw.url }, "received request");

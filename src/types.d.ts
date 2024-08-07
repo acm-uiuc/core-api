@@ -18,6 +18,7 @@ declare module "fastify" {
       zodSchema: Zod.ZodTypeAny,
     ) => Promise<void>;
     runEnvironment: RunEnvironment;
+    environmentConfig: ConfigType;
   }
   interface FastifyRequest {
     startTime: number;

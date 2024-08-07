@@ -35,10 +35,7 @@ const environmentConfig: EnvironmentConfigType = {
       "0": [AppRoles.MANAGER], // Dummy Group for development only
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.MANAGER] },
-    ValidCorsOrigins: [
-      "http://localhost:3000",
-      /\.acmuiuc\.\.pages\.dev$/,
-    ],
+    ValidCorsOrigins: ["http://localhost:3000", /\.acmuiuc\.\.pages\.dev$/],
     AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",
   },
   prod: {

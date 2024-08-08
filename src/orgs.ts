@@ -15,6 +15,7 @@ export const SIGList = [
   "SIGPLAN",
   "SIGPolicy",
   "SIGARCH",
+  "SIGRobotics",
 ] as const;
 
 export const CommitteeList = [

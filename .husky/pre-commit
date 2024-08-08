@@ -1,2 +1,1 @@
-yarn prettier:write
-yarn lint --fix
+yarn run lint-staged

@@ -11,6 +11,7 @@ import eventsPlugin from "./routes/events.js";
 import cors from "@fastify/cors";
 import fastifyZodValidationPlugin from "./plugins/validate.js";
 import { environmentConfig } from "./config.js";
+import organizationsPlugin from "./routes/organizations.js";
 
 const now = () => Date.now();
 
@@ -64,6 +65,7 @@ async function init() {
     async (api, _options) => {
       api.register(protectedRoute, { prefix: "/protected" });
       api.register(eventsPlugin, { prefix: "/events" });
+      api.register(organizationsPlugin, { prefix: "/organizations" });
     },
     { prefix: "/api/v1" },
   );

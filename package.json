@@ -15,7 +15,8 @@
     "lint": "eslint . --ext .ts --cache",
     "prettier": "prettier --check src/*.ts src/**/*.ts",
     "prettier:write": "prettier --write src/*.ts src/**/*.ts",
-    "prepare": "node .husky/install.mjs || true"
+    "prepare": "node .husky/install.mjs || true",
+    "lint-staged": "lint-staged"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
@@ -29,12 +30,13 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.2.1",
+    "husky": "^9.1.4",
+    "lint-staged": "^15.2.8",
     "prettier": "^3.3.3",
     "request": "^2.88.2",
     "synp": "^1.9.13",
     "tsx": "^4.16.5",
-    "typescript": "^5.5.4",
-    "husky": "^9.1.4"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.624.0",

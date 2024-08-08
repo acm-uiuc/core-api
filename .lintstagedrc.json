@@ -1,0 +1,6 @@
+{
+    "*.ts": [
+      "yarn run prettier:write",
+      "yarn run lint --fix"
+    ]
+  }

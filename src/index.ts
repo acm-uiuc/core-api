@@ -68,7 +68,7 @@ async function init() {
     { prefix: "/api/v1" },
   );
   await app.register(cors, {
-    origin: environmentConfig[app.runEnvironment].ValidCorsOrigins,
+    origin: app.environmentConfig.ValidCorsOrigins,
   });
 
   return app;

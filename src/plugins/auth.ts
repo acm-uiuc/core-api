@@ -52,7 +52,7 @@ export type AadToken = {
   roles?: string[];
 };
 const smClient = new SecretsManagerClient({
-  region: process.env.AWS_REGION || "us-east-1",
+  region: genericConfig.AwsRegion,
 });
 
 const getSecretValue = async (
@@ -123,7 +123,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           }
           verifyOptions = { algorithms: ["HS256" as Algorithm] };
         } else {
-          const AadClientId = process.env.AadValidClientId;
+          const AadClientId = fastify.environmentConfig.AadValidClientId;
           if (!AadClientId) {
             request.log.error(
               "Server is misconfigured, could not find `AadValidClientId`!",

@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyInstance, FastifyReply } from "fastify";
 import { AppRoles, RunEnvironment } from "./roles.ts";
 import { AadToken } from "./plugins/auth.ts";
+import { ConfigType } from "./config.ts";
 declare module "fastify" {
   interface FastifyInstance {
     authenticate: (

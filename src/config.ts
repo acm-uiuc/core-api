@@ -3,7 +3,7 @@ import { AppRoles, RunEnvironment } from "./roles.js";
 type GroupRoleMapping = Record<string, AppRoles[]>;
 type AzureRoleMapping = Record<string, AppRoles[]>;
 
-type ConfigType = {
+export type ConfigType = {
   GroupRoleMapping: GroupRoleMapping;
   AzureRoleMapping: AzureRoleMapping;
   ValidCorsOrigins: (string | RegExp)[];
@@ -14,6 +14,7 @@ type GenericConfigType = {
   DynamoTableName: string;
   ConfigSecretName: string;
   UpcomingEventThresholdSeconds: number;
+  AwsRegion: string;
 };
 
 type EnvironmentConfigType = {
@@ -24,6 +25,7 @@ const genericConfig: GenericConfigType = {
   DynamoTableName: "infra-events-api-records",
   ConfigSecretName: "infra-events-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
+  AwsRegion: process.env.AWS_REGION || "us-east-1",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

@@ -53,7 +53,7 @@ const getResponseJsonSchema = zodToJsonSchema(getResponseBodySchema);
 type EventsGetQueryParams = { upcomingOnly?: boolean };
 
 const dynamoClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || "us-east-1",
+  region: genericConfig.AwsRegion,
 });
 
 const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {

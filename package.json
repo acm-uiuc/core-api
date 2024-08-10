@@ -17,10 +17,10 @@
     "prettier:write": "prettier --write src/*.ts src/**/*.ts",
     "prepare": "node .husky/install.mjs || true",
     "lint-staged": "lint-staged",
-    "test:unit": "cross-env APPLICATION_KEY=infra-events-api vitest run tests/unit",
+    "test:unit": "cross-env APPLICATION_KEY=infra-events-api vitest tests/unit",
     "test:unit-ui": "yarn test:unit --ui",
     "test:unit-watch": "cross-env APPLICATION_KEY=infra-events-api vitest tests/unit",
-    "test:live": "cross-env APPLICATION_KEY=infra-events-api vitest run tests/live",
+    "test:live": "cross-env APPLICATION_KEY=infra-events-api vitest tests/live",
     "test:live-ui": "yarn test:live --ui"
   },
   "devDependencies": {
@@ -29,6 +29,7 @@
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.0.1",
     "@typescript-eslint/parser": "^8.0.1",
+    "@vitest/ui": "^2.0.5",
     "aws-sdk-client-mock": "^4.0.1",
     "cross-env": "^7.0.3",
     "esbuild": "^0.23.0",

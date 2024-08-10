@@ -35,5 +35,13 @@
         "alwaysTryTypes": true
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.testdata.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

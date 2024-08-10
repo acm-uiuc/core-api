@@ -28,6 +28,14 @@ export abstract class BaseError<T extends string> extends Error {
   toString() {
     return `Error ${this.id} (${this.name}): ${this.message}\n\n${this.stack}`;
   }
+  toJson() {
+    return {
+      error: true,
+      name: this.name,
+      id: this.id,
+      message: this.message,
+    };
+  }
 }
 
 export class UnauthorizedError extends BaseError<"UnauthorizedError"> {

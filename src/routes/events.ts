@@ -50,6 +50,7 @@ const responseJsonSchema = zodToJsonSchema(
 // GET
 const getResponseBodySchema = z.array(requestBodySchema);
 const getResponseJsonSchema = zodToJsonSchema(getResponseBodySchema);
+export type EventGetResponse = z.infer<typeof getResponseBodySchema>;
 type EventsGetQueryParams = { upcomingOnly?: boolean };
 
 const dynamoClient = new DynamoDBClient({

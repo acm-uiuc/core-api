@@ -62,15 +62,15 @@ deploy_dev: check_account_dev build
 
 install_test_deps:
 	yarn -D
-	pip install -r $(integration_test_directory_root)/requirements.txt
 
 test_live_integration: install_test_deps
-	APPLICATION_KEY=$(application_key) pytest -rP $(integration_test_directory_root)
+	yarn test:live
 
 test_unit: install_test_deps
 	yarn typecheck
 	yarn lint
 	yarn prettier
+	yarn test:unit
 
 dev_health_check:
 	curl -f https://$(application_key).aws.qa.acmuiuc.org/api/v1/healthz

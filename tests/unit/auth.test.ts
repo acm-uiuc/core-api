@@ -1,14 +1,12 @@
-import { afterAll, expect, test, beforeEach, vi } from "vitest";
+import { expect, test } from "vitest";
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
-import { EventGetResponse } from "../../src/routes/events.js";
 import { secretJson, secretObject, jwtPayload } from "./secret.testdata.js";
 import jwt from "jsonwebtoken";
-import { create } from "domain";
 
 const ddbMock = mockClient(SecretsManagerClient);
 
@@ -33,5 +31,8 @@ test("Test happy path", async () => {
   });
   expect(response.statusCode).toBe(200);
   const jsonBody = await response.json();
-  expect(jsonBody).toEqual({ username: "infra-unit-test@acm.illinois.edu" });
+  expect(jsonBody).toEqual({
+    username: "infra-unit-test@acm.illinois.edu",
+    roles: ["manage:events"],
+  });
 });

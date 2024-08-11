@@ -89,7 +89,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         );
         reply.send({
           id: entryUUID,
-          resource: `/api/v1/entry/${entryUUID}`,
+          resource: `/api/v1/event/${entryUUID}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {

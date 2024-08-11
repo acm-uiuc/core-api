@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
@@ -11,11 +11,26 @@ import jwt from "jsonwebtoken";
 const ddbMock = mockClient(SecretsManagerClient);
 
 const app = await init();
-
-function createJwt() {
-  const jwt_secret = secretObject["jwt_key"];
-  return jwt.sign(jwtPayload, jwt_secret, { algorithm: "HS256" });
+const jwt_secret = secretObject["jwt_key"];
+export function createJwt(date?: Date, group?: string) {
+  let modifiedPayload = jwtPayload;
+  if (date) {
+    const nowMs = Math.floor(date.valueOf() / 1000);
+    const laterMs = nowMs + 3600 * 24;
+    modifiedPayload = {
+      ...jwtPayload,
+      iat: nowMs,
+      nbf: nowMs,
+      exp: laterMs,
+    };
+  }
+  if (group) {
+    modifiedPayload["groups"][0] = group;
+  }
+  return jwt.sign(modifiedPayload, jwt_secret, { algorithm: "HS256" });
 }
+vi.stubEnv("JwtSigningKey", jwt_secret);
+
 const testJwt = createJwt();
 
 test("Test happy path", async () => {

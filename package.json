@@ -9,8 +9,8 @@
   "scripts": {
     "build": "rm -rf dist/ && tsc",
     "dev": "tsx watch src/index.ts",
-    "build:lambda": "yarn build && cp package.json dist/ && yarn lockfile-manage",
-    "lockfile-manage": "synp --source-file yarn.lock && cp package-lock.json dist/ && rm package-lock.json",
+    "build:lambda": "yarn build && cp package.json dist/src/ && yarn lockfile-manage",
+    "lockfile-manage": "synp --source-file yarn.lock && cp package-lock.json dist/src/ && rm package-lock.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts --cache",
     "prettier": "prettier --check src/*.ts src/**/*.ts",

@@ -81,12 +81,12 @@ Resources:
     DependsOn:
       - AppLogGroups
     Properties:
-      CodeUri: ../dist/
+      CodeUri: ../dist/src/
       AutoPublishAlias: live
       Runtime: nodejs20.x
       Description: !Sub "${ApplicationFriendlyName} API Lambda"
       FunctionName: !Sub ${ApplicationPrefix}-lambda
-      Handler: src.lambda.handler
+      Handler: lambda.handler
       MemorySize: 512
       Role: !GetAtt AppSecurityRoles.Outputs.MainFunctionRoleArn
       Timeout: 60

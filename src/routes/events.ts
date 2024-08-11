@@ -27,6 +27,7 @@ const baseBodySchema = z.object({
   locationLink: z.optional(z.string().url()),
   host: z.enum(OrganizationList),
   featured: z.boolean().default(false),
+  paidEventId: z.optional(z.string().min(1)),
 });
 
 const requestBodySchema = baseBodySchema

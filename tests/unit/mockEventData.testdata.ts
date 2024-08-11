@@ -70,6 +70,38 @@ const dynamoTableData = [
   },
   {
     id: {
+      S: "4d38608d-90bf-4a58-8701-3f1b659a53db",
+    },
+    createdBy: {
+      S: "dsingh14@illinois.edu",
+    },
+    description: {
+      S: "Test paid featured event.",
+    },
+    end: {
+      S: "2024-09-25T19:00:00",
+    },
+    featured: {
+      BOOL: true,
+    },
+    host: {
+      S: "Social Committee",
+    },
+    location: {
+      S: "ACM Middle Room",
+    },
+    start: {
+      S: "2024-09-25T18:00:00",
+    },
+    title: {
+      S: "Testing Paid and Featured Event",
+    },
+    paidEventId: {
+      S: "sp24_semiformal",
+    },
+  },
+  {
+    id: {
       S: "accd7fe0-50ac-427b-8041-a2b3ddcd328e",
     },
     createdBy: {

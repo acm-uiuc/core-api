@@ -39,6 +39,7 @@ const environmentConfig: EnvironmentConfigType = {
     AzureRoleMapping: { AutonomousWriters: [AppRoles.MANAGER] },
     ValidCorsOrigins: [
       "http://localhost:3000",
+      "http://localhost:5173",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
     ],
     AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",
@@ -53,6 +54,7 @@ const environmentConfig: EnvironmentConfigType = {
     ValidCorsOrigins: [
       "https://acm.illinois.edu",
       "https://www.acm.illinois.edu",
+      "https://manage.acm.illinois.edu",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
     ],
     AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296",

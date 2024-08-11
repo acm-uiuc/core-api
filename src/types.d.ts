@@ -12,7 +12,7 @@ declare module "fastify" {
       request: FastifyRequest,
       reply: FastifyReply,
       validRoles: AppRoles[],
-    ) => Promise<void>;
+    ) => Promise<Set<AppRoles>>;
     zodValidateBody: (
       request: FastifyRequest,
       _reply: FastifyReply,

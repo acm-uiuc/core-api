@@ -81,7 +81,8 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
       request: FastifyRequest,
       _reply: FastifyReply,
       validRoles: AppRoles[],
-    ): Promise<void> {
+    ): Promise<Set<AppRoles>> {
+      const userRoles = new Set([] as AppRoles[]);
       try {
         const authHeader = request.headers.authorization;
         if (!authHeader) {
@@ -157,7 +158,6 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
         ) as AadToken;
         request.tokenPayload = verifiedTokenData;
         request.username = verifiedTokenData.email || verifiedTokenData.sub;
-        const userRoles = new Set([] as AppRoles[]);
         const expectedRoles = new Set(validRoles);
         if (
           verifiedTokenData.groups &&
@@ -192,7 +192,10 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
             });
           }
         }
-        if (intersection(userRoles, expectedRoles).size === 0) {
+        if (
+          expectedRoles.size > 0 &&
+          intersection(userRoles, expectedRoles).size === 0
+        ) {
           throw new UnauthorizedError({
             message: "User does not have the privileges for this task.",
           });
@@ -213,6 +216,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           message: "Invalid token.",
         });
       }
+      return userRoles;
     },
   );
 };

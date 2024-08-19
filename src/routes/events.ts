@@ -57,8 +57,8 @@ const getEventSchema = requestSchema.extend({
   id: z.string(),
 });
 
-// export type EventGetResponse = z.infer<typeof getEventSchema>;
-// const getEventJsonSchema = zodToJsonSchema(getEventSchema);
+export type EventGetResponse = z.infer<typeof getEventSchema>;
+const getEventJsonSchema = zodToJsonSchema(getEventSchema);
 
 const getEventsSchema = z.array(getEventSchema);
 export type EventsGetResponse = z.infer<typeof getEventsSchema>;
@@ -107,6 +107,46 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         }
         throw new DatabaseInsertError({
           message: "Failed to insert event to Dynamo table.",
+        });
+      }
+    },
+  );
+  type EventGetRequest = {
+    Params: { id: string };
+    Querystring: undefined;
+    Body: undefined;
+  };
+  fastify.get<EventGetRequest>(
+    "/:id",
+    {
+      schema: {
+        response: { 200: getEventJsonSchema },
+      },
+    },
+    async (request: FastifyRequest<EventGetRequest>, reply) => {
+      const id = request.params.id;
+      try {
+        const response = await dynamoClient.send(
+          new ScanCommand({
+            TableName: genericConfig.DynamoTableName,
+            FilterExpression: "#id = :id",
+            ExpressionAttributeNames: {
+              "#id": "id",
+            },
+            ExpressionAttributeValues: marshall({ ":id": id }),
+          }),
+        );
+        const items = response.Items?.map((item) => unmarshall(item));
+        if (items?.length !== 1) {
+          throw new Error("Event not found");
+        }
+        reply.send(items[0]);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to get from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseFetchError({
+          message: "Failed to get event from Dynamo table.",
         });
       }
     },

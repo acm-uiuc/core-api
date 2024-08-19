@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { OrganizationList } from "../orgs.js";
 import {
+  DeleteItemCommand,
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
@@ -147,6 +148,44 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         }
         throw new DatabaseFetchError({
           message: "Failed to get event from Dynamo table.",
+        });
+      }
+    },
+  );
+  type EventDeleteRequest = {
+    Params: { id: string };
+    Querystring: undefined;
+    Body: undefined;
+  };
+  fastify.delete<EventDeleteRequest>(
+    "/:id",
+    {
+      schema: {
+        response: { 200: responseJsonSchema },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
+      },
+    },
+    async (request: FastifyRequest<EventDeleteRequest>, reply) => {
+      const id = request.params.id;
+      try {
+        await dynamoClient.send(
+          new DeleteItemCommand({
+            TableName: genericConfig.DynamoTableName,
+            Key: marshall({ id }),
+          }),
+        );
+        reply.send({
+          id,
+          resource: `/api/v1/event/${id}`,
+        });
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to delete from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseInsertError({
+          message: "Failed to delete event from Dynamo table.",
         });
       }
     },

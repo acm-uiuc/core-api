@@ -1,12 +1,18 @@
 import { AppRoles, RunEnvironment } from "./roles.js";
+import { OriginFunction } from "@fastify/cors";
 
-type GroupRoleMapping = Record<string, AppRoles[]>;
-type AzureRoleMapping = Record<string, AppRoles[]>;
+// From @fastify/cors
+type ArrayOfValueOrArray<T> = Array<ValueOrArray<T>>;
+type OriginType = string | boolean | RegExp;
+type ValueOrArray<T> = T | ArrayOfValueOrArray<T>;
+
+type GroupRoleMapping = Record<string, readonly AppRoles[]>;
+type AzureRoleMapping = Record<string, readonly AppRoles[]>;
 
 export type ConfigType = {
   GroupRoleMapping: GroupRoleMapping;
   AzureRoleMapping: AzureRoleMapping;
-  ValidCorsOrigins: (string | RegExp)[];
+  ValidCorsOrigins: ValueOrArray<OriginType> | OriginFunction;
   AadValidClientId: string;
 };
 
@@ -60,6 +66,6 @@ const environmentConfig: EnvironmentConfigType = {
     ],
     AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296",
   },
-} as const;
+};
 
 export { genericConfig, environmentConfig };

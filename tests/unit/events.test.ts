@@ -1,9 +1,5 @@
 import { afterAll, expect, test, beforeEach, vi } from "vitest";
-import {
-  ScanCommand,
-  DynamoDBClient,
-  PutItemCommand,
-} from "@aws-sdk/client-dynamodb";
+import { ScanCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
 import { EventGetResponse } from "../../src/routes/events.js";
@@ -12,16 +8,9 @@ import {
   dynamoTableDataUnmarshalled,
   dynamoTableDataUnmarshalledUpcomingOnly,
 } from "./mockEventData.testdata.js";
-import { createJwt } from "./auth.test.js";
-import {
-  GetSecretValueCommand,
-  SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
-import { secretJson, secretObject } from "./secret.testdata.js";
-import supertest from "supertest";
+import { secretObject } from "./secret.testdata.js";
 
 const ddbMock = mockClient(DynamoDBClient);
-const smMock = mockClient(SecretsManagerClient);
 const jwt_secret = secretObject["jwt_key"];
 vi.stubEnv("JwtSigningKey", jwt_secret);
 

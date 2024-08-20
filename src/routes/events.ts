@@ -77,7 +77,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         response: { 200: responseJsonSchema },
       },
       preValidation: async (request, reply) => {
-        await fastify.zodValidateBody(request, reply, requestSchema);
+        await fastify.zodValidateBody(request, reply, postRequestSchema);
       },
       onRequest: async (request, reply) => {
         await fastify.authorize(request, reply, [AppRoles.MANAGER]);

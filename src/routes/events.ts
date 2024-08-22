@@ -18,6 +18,7 @@ import moment from "moment-timezone";
 // POST
 
 const repeatOptions = ["weekly", "biweekly"] as const;
+export type EventRepeatOptions = (typeof repeatOptions)[number];
 
 const baseSchema = z.object({
   title: z.string().min(1),
@@ -26,7 +27,7 @@ const baseSchema = z.object({
   end: z.optional(z.string()),
   location: z.string(),
   locationLink: z.optional(z.string().url()),
-  host: z.enum(OrganizationList),
+  host: z.enum(OrganizationList as [string, ...string[]]),
   featured: z.boolean().default(false),
   paidEventId: z.optional(z.string().min(1)),
 });

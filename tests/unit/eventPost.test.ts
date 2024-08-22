@@ -144,6 +144,7 @@ test("Happy path: Adding a non-repeating, featured, paid event", async () => {
       featured: true,
       host: "Social Committee",
       location: "Illini Union",
+      locationLink: "https://maps.app.goo.gl/rUBhjze5mWuTSUJK9",
       start: "2024-09-25T18:00:00",
       title: "Fall Semiformal",
       paidEventId: "sp24_semiformal",

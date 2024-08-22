@@ -29,13 +29,8 @@ node --env-file=.env get_msft_jwt.js
 aws configure sso
 ```
 
-Go to AWS Access Portal > "acmdev" > Access keys and copy the values for 
-"AWS start URL" and "AWS Region"
-
-Add your profile to your `.zshrc` / `.bashrc`.
+Log in with SSO. Then, export the `AWS_PROFILE` that the above command outputted. 
 
 ```bash
 export AWS_PROFILE=ABC-DEV
 ```
-
-and then `source ~/.zshrc` / `source ~/.bashrc`.

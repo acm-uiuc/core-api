@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { InternalServerError } from "../../src/errors/index.js";
-import { EventsGetResponse } from "../../src/routes/events.js";
 import { describe } from "node:test";
 import { OrganizationList } from "../../src/orgs.js";
+import ical from "node-ical";
 
 const appKey = process.env.APPLICATION_KEY;
 if (!appKey) {
@@ -23,6 +23,8 @@ describe("Getting specific calendars", async () => {
       expect(response.headers.get("Content-Disposition")).toEqual(
         'attachment; filename="calendar.ics"',
       );
+      const calendar = ical.sync.parseICS(await response.text());
+      expect(calendar["vcalendar"]["type"]).toEqual("VCALENDAR");
     });
   }
 });

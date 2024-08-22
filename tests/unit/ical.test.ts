@@ -2,12 +2,7 @@ import { afterAll, expect, test, beforeEach, vi } from "vitest";
 import { ScanCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
-import { EventGetResponse } from "../../src/routes/events.js";
-import {
-  dynamoTableData,
-  dynamoTableDataUnmarshalled,
-  dynamoTableDataUnmarshalledUpcomingOnly,
-} from "./mockEventData.testdata.js";
+import { dynamoTableData } from "./mockEventData.testdata.js";
 import { secretObject } from "./secret.testdata.js";
 import { readFile } from "fs/promises";
 

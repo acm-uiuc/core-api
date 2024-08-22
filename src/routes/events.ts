@@ -92,14 +92,11 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         await dynamoClient.send(
           new PutItemCommand({
             TableName: genericConfig.DynamoTableName,
-            Item: marshall(
-              {
-                ...request.body,
-                id: entryUUID,
-                createdBy: request.username,
-              },
-              { removeUndefinedValues: true },
-            ),
+            Item: marshall({
+              ...request.body,
+              id: entryUUID,
+              createdBy: request.username,
+            }),
           }),
         );
         reply.send({

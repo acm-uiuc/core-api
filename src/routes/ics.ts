@@ -83,7 +83,7 @@ const icalPlugin: FastifyPluginAsync = async (fastify, _options) => {
         ? `${host} Events`
         : `ACM@UIUC - ${host} Events`;
     if (host == "ACM") {
-      calendarName = "ACM@UIUC Major Events";
+      calendarName = "ACM@UIUC - Major Events";
     }
     if (!host) {
       calendarName = "ACM@UIUC - All Events";

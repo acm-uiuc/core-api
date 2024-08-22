@@ -247,6 +247,8 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       } catch (e: unknown) {
         if (e instanceof Error) {
           request.log.error("Failed to get from DynamoDB: " + e.toString());
+        } else {
+          request.log.error(`Failed to get from DynamoDB. ${e}`);
         }
         throw new DatabaseFetchError({
           message: "Failed to get events from Dynamo table.",

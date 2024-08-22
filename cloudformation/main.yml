@@ -120,6 +120,13 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: HostIndex
+        KeySchema:
+        - AttributeName: host
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
 
   AppApiGateway:
     Type: AWS::Serverless::Api

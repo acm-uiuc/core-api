@@ -165,7 +165,6 @@ const dynamoTableData = [
 
 const dynamoTableDataUnmarshalled = dynamoTableData.map((x: any) => {
   const temp = unmarshall(x);
-  delete temp.id;
   delete temp.createdBy;
   return temp;
 });
@@ -173,7 +172,6 @@ const dynamoTableDataUnmarshalled = dynamoTableData.map((x: any) => {
 const dynamoTableDataUnmarshalledUpcomingOnly = dynamoTableData
   .map((x: any) => {
     const temp = unmarshall(x);
-    delete temp.id;
     delete temp.createdBy;
     return temp;
   })

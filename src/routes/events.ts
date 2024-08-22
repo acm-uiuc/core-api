@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { OrganizationList } from "../orgs.js";
 import {
+  DeleteItemCommand,
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
@@ -18,7 +19,7 @@ import moment from "moment-timezone";
 
 const repeatOptions = ["weekly", "biweekly"] as const;
 
-const baseBodySchema = z.object({
+const baseSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   start: z.string(),
@@ -30,16 +31,20 @@ const baseBodySchema = z.object({
   paidEventId: z.optional(z.string().min(1)),
 });
 
-const requestBodySchema = baseBodySchema
-  .extend({
-    repeats: z.optional(z.enum(repeatOptions)),
-    repeatEnds: z.string().optional(),
-  })
-  .refine((data) => (data.repeatEnds ? data.repeats !== undefined : true), {
-    message: "repeats is required when repeatEnds is defined",
-  });
+const requestSchema = baseSchema.extend({
+  repeats: z.optional(z.enum(repeatOptions)),
+  repeatEnds: z.string().optional(),
+});
 
-type EventPostRequest = z.infer<typeof requestBodySchema>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postRequestSchema = requestSchema.refine(
+  (data) => (data.repeatEnds ? data.repeats !== undefined : true),
+  {
+    message: "repeats is required when repeatEnds is defined",
+  },
+);
+
+type EventPostRequest = z.infer<typeof postRequestSchema>;
 
 const responseJsonSchema = zodToJsonSchema(
   z.object({
@@ -49,9 +54,15 @@ const responseJsonSchema = zodToJsonSchema(
 );
 
 // GET
-const getResponseBodySchema = z.array(requestBodySchema);
-const getResponseJsonSchema = zodToJsonSchema(getResponseBodySchema);
-export type EventGetResponse = z.infer<typeof getResponseBodySchema>;
+const getEventSchema = requestSchema.extend({
+  id: z.string(),
+});
+
+export type EventGetResponse = z.infer<typeof getEventSchema>;
+const getEventJsonSchema = zodToJsonSchema(getEventSchema);
+
+const getEventsSchema = z.array(getEventSchema);
+export type EventsGetResponse = z.infer<typeof getEventsSchema>;
 type EventsGetQueryParams = { upcomingOnly?: boolean };
 
 const dynamoClient = new DynamoDBClient({
@@ -66,7 +77,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         response: { 200: responseJsonSchema },
       },
       preValidation: async (request, reply) => {
-        await fastify.zodValidateBody(request, reply, requestBodySchema);
+        await fastify.zodValidateBody(request, reply, postRequestSchema);
       },
       onRequest: async (request, reply) => {
         await fastify.authorize(request, reply, [AppRoles.MANAGER]);
@@ -101,6 +112,84 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       }
     },
   );
+  type EventGetRequest = {
+    Params: { id: string };
+    Querystring: undefined;
+    Body: undefined;
+  };
+  fastify.get<EventGetRequest>(
+    "/:id",
+    {
+      schema: {
+        response: { 200: getEventJsonSchema },
+      },
+    },
+    async (request: FastifyRequest<EventGetRequest>, reply) => {
+      const id = request.params.id;
+      try {
+        const response = await dynamoClient.send(
+          new ScanCommand({
+            TableName: genericConfig.DynamoTableName,
+            FilterExpression: "#id = :id",
+            ExpressionAttributeNames: {
+              "#id": "id",
+            },
+            ExpressionAttributeValues: marshall({ ":id": id }),
+          }),
+        );
+        const items = response.Items?.map((item) => unmarshall(item));
+        if (items?.length !== 1) {
+          throw new Error("Event not found");
+        }
+        reply.send(items[0]);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to get from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseFetchError({
+          message: "Failed to get event from Dynamo table.",
+        });
+      }
+    },
+  );
+  type EventDeleteRequest = {
+    Params: { id: string };
+    Querystring: undefined;
+    Body: undefined;
+  };
+  fastify.delete<EventDeleteRequest>(
+    "/:id",
+    {
+      schema: {
+        response: { 200: responseJsonSchema },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
+      },
+    },
+    async (request: FastifyRequest<EventDeleteRequest>, reply) => {
+      const id = request.params.id;
+      try {
+        await dynamoClient.send(
+          new DeleteItemCommand({
+            TableName: genericConfig.DynamoTableName,
+            Key: marshall({ id }),
+          }),
+        );
+        reply.send({
+          id,
+          resource: `/api/v1/event/${id}`,
+        });
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to delete from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseInsertError({
+          message: "Failed to delete event from Dynamo table.",
+        });
+      }
+    },
+  );
   type EventsGetRequest = {
     Body: undefined;
     Querystring?: EventsGetQueryParams;
@@ -112,7 +201,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         querystring: {
           upcomingOnly: { type: "boolean" },
         },
-        response: { 200: getResponseJsonSchema },
+        response: { 200: getEventsSchema },
       },
     },
     async (request: FastifyRequest<EventsGetRequest>, reply) => {
@@ -123,7 +212,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         );
         const items = response.Items?.map((item) => unmarshall(item));
         const currentTimeChicago = moment().tz("America/Chicago");
-        let parsedItems = getResponseBodySchema.parse(items);
+        let parsedItems = getEventsSchema.parse(items);
         if (upcomingOnly) {
           parsedItems = parsedItems.filter((item) => {
             try {

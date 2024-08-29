@@ -110,7 +110,7 @@ Resources:
     DeletionPolicy: "Retain"  
     Properties:
       BillingMode: 'PAY_PER_REQUEST'
-      TableName: infra-events-api-records
+      TableName: infra-core-api-events
       DeletionProtectionEnabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: !If [IsProd, true, false]

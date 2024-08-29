@@ -52,7 +52,7 @@ Resources:
                 - secretsmanager:GetSecretValue
               Effect: Allow
               Resource:
-                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:infra-events-api-config*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:infra-core-api-config*
         PolicyName: lambda-db-secrets
       - PolicyDocument:
           Version: 2012-10-17

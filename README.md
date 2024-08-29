@@ -1,4 +1,4 @@
-# Example ACM@UIUC Node-based API using AWS Lambda/API Gateway
+# ACM Core API
 
 ## Run Locally
 1. `yarn -D`

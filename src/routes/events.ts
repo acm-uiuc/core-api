@@ -81,7 +81,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         await fastify.zodValidateBody(request, reply, postRequestSchema);
       },
       onRequest: async (request, reply) => {
-        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
+        await fastify.authorize(request, reply, [AppRoles.EVENTS_MANAGER]);
       },
     },
     async (request, reply) => {
@@ -165,7 +165,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         response: { 200: responseJsonSchema },
       },
       onRequest: async (request, reply) => {
-        await fastify.authorize(request, reply, [AppRoles.MANAGER]);
+        await fastify.authorize(request, reply, [AppRoles.EVENTS_MANAGER]);
       },
     },
     async (request: FastifyRequest<EventDeleteRequest>, reply) => {

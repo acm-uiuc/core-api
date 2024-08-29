@@ -17,7 +17,8 @@ export type ConfigType = {
 };
 
 type GenericConfigType = {
-  DynamoTableName: string;
+  EventsDynamoTableName: string;
+  OrgInfoTableName: string;
   ConfigSecretName: string;
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
@@ -28,7 +29,8 @@ type EnvironmentConfigType = {
 };
 
 const genericConfig: GenericConfigType = {
-  DynamoTableName: "infra-core-api-events",
+  EventsDynamoTableName: "infra-core-api-events",
+  OrgInfoTableName: "infra-core-api-orginfo",
   ConfigSecretName: "infra-core-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",

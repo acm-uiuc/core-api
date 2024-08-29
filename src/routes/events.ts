@@ -91,7 +91,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           randomUUID().toString();
         await dynamoClient.send(
           new PutItemCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             Item: marshall({
               ...request.body,
               id: entryUUID,
@@ -130,7 +130,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         const response = await dynamoClient.send(
           new ScanCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             FilterExpression: "#id = :id",
             ExpressionAttributeNames: {
               "#id": "id",
@@ -173,7 +173,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         await dynamoClient.send(
           new DeleteItemCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             Key: marshall({ id }),
           }),
         );
@@ -209,7 +209,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       const upcomingOnly = request.query?.upcomingOnly || false;
       try {
         const response = await dynamoClient.send(
-          new ScanCommand({ TableName: genericConfig.DynamoTableName }),
+          new ScanCommand({ TableName: genericConfig.EventsDynamoTableName }),
         );
         const items = response.Items?.map((item) => unmarshall(item));
         const currentTimeChicago = moment().tz("America/Chicago");

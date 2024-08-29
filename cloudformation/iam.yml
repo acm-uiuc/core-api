@@ -61,8 +61,8 @@ Resources:
                 - dynamodb:*
               Effect: Allow
               Resource:
-                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-api-records/*
-                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-api-records
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events/*
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events
         PolicyName: lambda-dynamo
 Outputs:
   MainFunctionRoleArn:

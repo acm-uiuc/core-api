@@ -17,15 +17,13 @@ import moment from "moment";
 
 export type IUpdateDiscord = EventPostRequest & { id: string };
 
-const urlRegex =
-  /https:\/\/[a-f0-9\.-]+\/calendar\?id=([a-f0-9-]+)&date=[\d-]+/;
+const urlRegex = /https:\/\/[a-z0-9\.-]+\/calendar\?id=([a-f0-9-]+)/;
 export const updateDiscord = async (
   event: IUpdateDiscord,
   isDelete: boolean = false,
 ) => {
-  // If an event isn't featured, don't create it.
-  // If an event changed from featured to not featured, don't modify it.
-  if (!isDelete && !event.featured) {
+  // If an event isn't featured or repeats, don't handle it.
+  if (!isDelete && (!event.featured || event.repeats !== undefined)) {
     return;
   }
 
@@ -92,11 +90,16 @@ export const updateDiscord = async (
         await guild.scheduledEvents.edit(existingMetadata.id, editOptions);
       }
     } else {
-      await guild.scheduledEvents.create(options);
+      if (options.scheduledStartTime < new Date()) {
+        console.log(`Refusing to create past event "${title}"`);
+      } else {
+        await guild.scheduledEvents.create(options);
+      }
     }
 
     await client.destroy();
   });
 
+  console.log("TOKEN", process.env.DISCORD_BOT_TOKEN);
   client.login(process.env.DISCORD_BOT_TOKEN);
 };

@@ -101,7 +101,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Item: marshall(entry),
           }),
         );
-        await updateDiscord(entry);
+        await updateDiscord(entry, false);
 
         reply.send({
           id: entryUUID,

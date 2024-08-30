@@ -14,6 +14,7 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { DatabaseFetchError, DatabaseInsertError } from "../errors/index.js";
 import { randomUUID } from "crypto";
 import moment from "moment-timezone";
+import { updateDiscord } from "./discord.js";
 
 // POST
 
@@ -45,7 +46,7 @@ const postRequestSchema = requestSchema.refine(
   },
 );
 
-type EventPostRequest = z.infer<typeof postRequestSchema>;
+export type EventPostRequest = z.infer<typeof postRequestSchema>;
 
 const responseJsonSchema = zodToJsonSchema(
   z.object({
@@ -89,16 +90,19 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         const entryUUID =
           (request.params as Record<string, string>).id ||
           randomUUID().toString();
+        const entry = {
+          ...request.body,
+          id: entryUUID,
+          createdBy: request.username,
+        };
         await dynamoClient.send(
           new PutItemCommand({
             TableName: genericConfig.DynamoTableName,
-            Item: marshall({
-              ...request.body,
-              id: entryUUID,
-              createdBy: request.username,
-            }),
+            Item: marshall(entry),
           }),
         );
+        await updateDiscord(entry);
+
         reply.send({
           id: entryUUID,
           resource: `/api/v1/event/${entryUUID}`,

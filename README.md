@@ -25,6 +25,8 @@ node --env-file=.env get_msft_jwt.js
 
 ## Configuring AWS
 
+SSO URL: `https://acmillinois.awsapps.com/start/#`
+
 ```
 aws configure sso
 ```

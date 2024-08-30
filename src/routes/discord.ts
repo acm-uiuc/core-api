@@ -6,20 +6,21 @@ import {
   GuildScheduledEventEntityType,
   GuildScheduledEventPrivacyLevel,
   GuildScheduledEvent,
-  type GuildScheduledEventEditOptions,
   GuildScheduledEventStatus,
 } from "discord.js";
-import { EventPostRequest } from "./events.js";
+import { type EventPostRequest } from "./events.js";
 import moment from "moment";
 
 // https://stackoverflow.com/a/3809435/5684541
 // https://calendar-buff.acmuiuc.pages.dev/calendar?id=dd7af73a-3df6-4e12-b228-0d2dac34fda7&date=2024-08-30
 // https://www.acm.illinois.edu/calendar?id=dd7af73a-3df6-4e12-b228-0d2dac34fda7&date=2024-08-30
 
+export type IUpdateDiscord = EventPostRequest & { id: string };
+
 const urlRegex =
   /https:\/\/[a-f0-9\.-]+\/calendar\?id=([a-f0-9-]+)&date=[\d-]+/;
 export const updateDiscord = async (
-  event: EventPostRequest & { id: string },
+  event: IUpdateDiscord,
   isDelete: boolean = false,
 ) => {
   // If an event isn't featured, don't create it.
@@ -31,9 +32,7 @@ export const updateDiscord = async (
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
-    const guild = await client.guilds.fetch(
-      process.env.DISCORD_SERVER_ID || "",
-    );
+    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID || "");
     const discordEvents = await guild.scheduledEvents.fetch();
     const snowflakeMeetingLookup = discordEvents.reduce(
       (o, event) => {
@@ -51,7 +50,8 @@ export const updateDiscord = async (
 
     console.log("snowflakeMeetingLookup", snowflakeMeetingLookup);
 
-    const { title, description, start, end, location, host, id } = event;
+    const { id } = event;
+
     const existingMetadata = snowflakeMeetingLookup[id];
 
     if (isDelete) {
@@ -65,6 +65,7 @@ export const updateDiscord = async (
     }
 
     // Handle creation or update
+    const { title, description, start, end, location, host } = event;
     const date = moment(start).tz("America/Chicago").format("YYYY-MM-DD");
     const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${date}`;
     const fullDescription = `${calendarURL}\nHost: ${host}\n${description}`;

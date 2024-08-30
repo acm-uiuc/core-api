@@ -14,7 +14,7 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { DatabaseFetchError, DatabaseInsertError } from "../errors/index.js";
 import { randomUUID } from "crypto";
 import moment from "moment-timezone";
-import { updateDiscord } from "./discord.js";
+import { IUpdateDiscord, updateDiscord } from "./discord.js";
 
 // POST
 
@@ -181,6 +181,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Key: marshall({ id }),
           }),
         );
+        await updateDiscord({ id } as IUpdateDiscord, true);
         reply.send({
           id,
           resource: `/api/v1/event/${id}`,

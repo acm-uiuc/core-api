@@ -55,7 +55,7 @@ const smClient = new SecretsManagerClient({
   region: genericConfig.AwsRegion,
 });
 
-const getSecretValue = async (
+export const getSecretValue = async (
   secretId: string,
 ): Promise<Record<string, string | number | boolean> | null> => {
   const data = await smClient.send(
@@ -112,7 +112,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           signingKey =
             process.env.JwtSigningKey ||
             ((
-              (await getSecretValue(genericConfig.ConfigSecretName)) || {
+              (await getSecretValue(genericConfig.CoreSecret)) || {
                 jwt_key: "",
               }
             ).jwt_key as string) ||

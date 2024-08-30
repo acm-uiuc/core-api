@@ -53,6 +53,7 @@ Resources:
               Effect: Allow
               Resource:
                 - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:infra-core-api-config*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:infra-events-ticketing-config-secret*
         PolicyName: lambda-db-secrets
       - PolicyDocument:
           Version: 2012-10-17
@@ -63,6 +64,10 @@ Resources:
               Resource:
                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events/*
                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-tickets
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-tickets/*
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-ticketing-metadata
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-ticketing-metadata/*
         PolicyName: lambda-dynamo
 Outputs:
   MainFunctionRoleArn:

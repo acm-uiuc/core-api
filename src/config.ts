@@ -14,22 +14,34 @@ export type ConfigType = {
   AzureRoleMapping: AzureRoleMapping;
   ValidCorsOrigins: ValueOrArray<OriginType> | OriginFunction;
   AadValidClientId: string;
+  MembershipCheckEndpoint: string;
 };
 
 type GenericConfigType = {
+  TicketingConfig: TicketingConfigType;
   DynamoTableName: string;
-  ConfigSecretName: string;
+  CoreSecret: string;
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
 };
 
+type TicketingConfigType = {
+  TicketsTable: string;
+  SecretName: string;
+  EventsTable: string;
+};
 type EnvironmentConfigType = {
   [env in RunEnvironment]: ConfigType;
 };
 
 const genericConfig: GenericConfigType = {
+  TicketingConfig: {
+    SecretName: "infra-events-ticketing-config-secret",
+    TicketsTable: "infra-events-tickets",
+    EventsTable: "infra-events-ticketing-metadata",
+  },
   DynamoTableName: "infra-core-api-events",
-  ConfigSecretName: "infra-core-api-config",
+  CoreSecret: "infra-core-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",
 } as const;
@@ -50,6 +62,8 @@ const environmentConfig: EnvironmentConfigType = {
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
     ],
     AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",
+    MembershipCheckEndpoint:
+      "https://infra-membership-api.aws.qa.acmuiuc.org/api/v1/checkMembership",
   },
   prod: {
     GroupRoleMapping: {
@@ -65,6 +79,8 @@ const environmentConfig: EnvironmentConfigType = {
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
     ],
     AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296",
+    MembershipCheckEndpoint:
+      "https://infra-membership-api.aws.acmuiuc.org/api/v1/checkMembership",
   },
 };
 

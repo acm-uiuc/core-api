@@ -98,5 +98,5 @@ export const updateDiscord = async (
     await client.destroy();
   });
 
-  client.login(process.env.DISCORD_TOKEN);
+  client.login(process.env.DISCORD_BOT_TOKEN);
 };

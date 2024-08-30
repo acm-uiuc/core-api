@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import { type EventPostRequest } from "./events.js";
 import moment from "moment";
+import { getSecretValue } from "../plugins/auth.js";
 
 // https://stackoverflow.com/a/3809435/5684541
 // https://calendar-buff.acmuiuc.pages.dev/calendar?id=dd7af73a-3df6-4e12-b228-0d2dac34fda7&date=2024-08-30
@@ -30,7 +31,8 @@ export const updateDiscord = async (
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
-    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID || "");
+    const guildID = await getSecretValue("discord_guild_id");
+    const guild = await client.guilds.fetch(guildID?.toString() || "");
     const discordEvents = await guild.scheduledEvents.fetch();
     const snowflakeMeetingLookup = discordEvents.reduce(
       (o, event) => {
@@ -100,6 +102,6 @@ export const updateDiscord = async (
     await client.destroy();
   });
 
-  console.log("TOKEN", process.env.DISCORD_BOT_TOKEN);
-  client.login(process.env.DISCORD_BOT_TOKEN);
+  const token = await getSecretValue("discord_bot_token");
+  client.login(token?.toString());
 };

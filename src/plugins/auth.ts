@@ -55,7 +55,7 @@ const smClient = new SecretsManagerClient({
   region: genericConfig.AwsRegion,
 });
 
-const getSecretValue = async (
+export const getSecretValue = async (
   secretId: string,
 ): Promise<Record<string, string | number | boolean> | null> => {
   const data = await smClient.send(

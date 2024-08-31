@@ -13,6 +13,7 @@ import fastifyZodValidationPlugin from "./plugins/validate.js";
 import { environmentConfig } from "./config.js";
 import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
+import vendingPlugin from "./routes/vending.js";
 
 const now = () => Date.now();
 
@@ -68,6 +69,7 @@ async function init() {
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
+      api.register(vendingPlugin, { prefix: "/vending" });
     },
     { prefix: "/api/v1" },
   );

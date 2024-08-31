@@ -7,7 +7,7 @@ import {
   dynamoTableData,
   dynamoTableDataUnmarshalled,
   dynamoTableDataUnmarshalledUpcomingOnly,
-} from "./mockEventData.testdata.js";
+} from "./data/mockEventData.testdata.js";
 import { secretObject } from "./secret.testdata.js";
 
 const ddbMock = mockClient(DynamoDBClient);

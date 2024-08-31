@@ -69,7 +69,7 @@ async function init() {
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
-      api.register(ticketingPlugin, { prefix: "/tickets" });
+      api.register(ticketingPlugin, { prefix: "/paidEvents" });
     },
     { prefix: "/api/v1" },
   );

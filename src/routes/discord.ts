@@ -103,5 +103,12 @@ export const updateDiscord = async (
     await client.destroy();
   });
 
-  client.login(secretApiConfig["discord_bot_token"]?.toString());
+  const token = secretApiConfig["discord_bot_token"];
+
+  if (!token) {
+    log("No Discord bot token found in secrets");
+    return;
+  }
+
+  client.login(token.toString());
 };

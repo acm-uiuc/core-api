@@ -68,5 +68,6 @@
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2",
     "zod-validation-error": "^3.3.1"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }

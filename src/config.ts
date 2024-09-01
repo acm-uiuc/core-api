@@ -49,6 +49,7 @@ const environmentConfig: EnvironmentConfigType = {
       "http://localhost:5173",
       "https://merch-pwa.pages.dev",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
+      /^https:\/\/(?:.*\.)?qa.acmuiuc\.org$/,
     ],
     AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",
   },

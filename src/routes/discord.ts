@@ -11,7 +11,6 @@ import {
 import { type EventPostRequest } from "./events.js";
 import moment from "moment";
 import { getSecretValue } from "../plugins/auth.js";
-import { FastifyRequest } from "fastify";
 
 // https://stackoverflow.com/a/3809435/5684541
 // https://calendar-buff.acmuiuc.pages.dev/calendar?id=dd7af73a-3df6-4e12-b228-0d2dac34fda7&date=2024-08-30
@@ -23,9 +22,8 @@ const urlRegex = /https:\/\/[a-z0-9\.-]+\/calendar\?id=([a-f0-9-]+)/;
 export const updateDiscord = async (
   event: IUpdateDiscord,
   isDelete: boolean = false,
-  request: FastifyRequest = {} as FastifyRequest,
 ) => {
-  const log = request ? request.log.info : console.log;
+  const log = console.log;
   // If an event isn't featured or repeats, don't handle it.
   if (!isDelete && (!event.featured || event.repeats !== undefined)) {
     return;
@@ -35,7 +33,7 @@ export const updateDiscord = async (
   const secretApiConfig = (await getSecretValue("infra-core-api-config")) || {};
 
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
-    console.log(`Logged in as ${readyClient.user.tag}`);
+    log(`Logged in as ${readyClient.user.tag}`);
     const guildID = secretApiConfig["discord_guild_id"];
     const guild = await client.guilds.fetch(guildID?.toString() || "");
     const discordEvents = await guild.scheduledEvents.fetch();
@@ -52,8 +50,6 @@ export const updateDiscord = async (
       },
       {} as Record<string, GuildScheduledEvent<GuildScheduledEventStatus>>,
     );
-
-    log("snowflakeMeetingLookup", snowflakeMeetingLookup);
 
     const { id } = event;
 
@@ -73,28 +69,28 @@ export const updateDiscord = async (
     const { title, description, start, end, location, host } = event;
     const date = moment(start).tz("America/Chicago").format("YYYY-MM-DD");
     const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${date}`;
-    const fullDescription = `${calendarURL}\nHost: ${host}\n${description}`;
+    const fullDescription = `${calendarURL}\n${description}`;
+    const fullTitle = title.toLowerCase().includes(host.toLowerCase())
+      ? title
+      : `${host} - ${title}`;
+
     const options: GuildScheduledEventCreateOptions = {
       entityType: GuildScheduledEventEntityType.External,
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-      name: title,
+      name: fullTitle,
       description: fullDescription,
       scheduledStartTime: moment(start).tz("America/Chicago").toDate(),
-      scheduledEndTime: end ?? moment(end).tz("America/Chicago").toDate(),
+      scheduledEndTime: end && moment(end).tz("America/Chicago").toDate(),
       entityMetadata: {
         location,
       },
     };
 
     if (existingMetadata) {
-      const editOptions = {
-        ...options,
-        id: existingMetadata.id,
-      };
       if (existingMetadata.creator?.bot !== true) {
         log(`Refusing to edit non-bot event "${title}"`);
       } else {
-        await guild.scheduledEvents.edit(existingMetadata.id, editOptions);
+        await guild.scheduledEvents.edit(existingMetadata.id, options);
       }
     } else {
       if (options.scheduledStartTime < new Date()) {
@@ -107,6 +103,5 @@ export const updateDiscord = async (
     await client.destroy();
   });
 
-  const token = secretApiConfig["discord_bot_token"];
-  client.login(token?.toString());
+  client.login(secretApiConfig["discord_bot_token"]?.toString());
 };

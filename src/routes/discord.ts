@@ -32,9 +32,11 @@ export const updateDiscord = async (
   }
 
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  const secretApiConfig = (await getSecretValue("infra-core-api-config")) || {};
+
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
-    const guildID = await getSecretValue("discord_guild_id");
+    const guildID = secretApiConfig["discord_guild_id"];
     const guild = await client.guilds.fetch(guildID?.toString() || "");
     const discordEvents = await guild.scheduledEvents.fetch();
     const snowflakeMeetingLookup = discordEvents.reduce(
@@ -105,6 +107,6 @@ export const updateDiscord = async (
     await client.destroy();
   });
 
-  const token = await getSecretValue("discord_bot_token");
+  const token = secretApiConfig["discord_bot_token"];
   client.login(token?.toString());
 };

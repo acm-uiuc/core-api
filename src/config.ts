@@ -47,6 +47,7 @@ const environmentConfig: EnvironmentConfigType = {
     ValidCorsOrigins: [
       "http://localhost:3000",
       "http://localhost:5173",
+      "http://localhost:5174",
       "https://merch-pwa.pages.dev",
       "https://manage.qa.acmuiuc.org",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,

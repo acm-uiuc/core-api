@@ -15,10 +15,9 @@ const vendingPlugin: FastifyPluginAsync = async (fastify, _options) => {
       items: [
         {
           rowid: 1,
-          name: "TBD",
-          image_url:
-            "https://acm-brand-images.s3.amazonaws.com/square-blue.png",
-          price: 400,
+          name: "A Picture of Ronit",
+          image_url: "https://acm-brand-images.s3.amazonaws.com/ronit.jpeg",
+          price: 999,
           calories: null,
           fat: null,
           carbs: null,

@@ -69,7 +69,9 @@ async function init() {
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
-      api.register(vendingPlugin, { prefix: "/vending" });
+      if (app.runEnvironment === "dev") {
+        api.register(vendingPlugin, { prefix: "/vending" });
+      }
     },
     { prefix: "/api/v1" },
   );

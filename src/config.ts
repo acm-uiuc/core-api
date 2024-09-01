@@ -47,6 +47,8 @@ const environmentConfig: EnvironmentConfigType = {
     ValidCorsOrigins: [
       "http://localhost:3000",
       "http://localhost:5173",
+      "https://merch-pwa.pages.dev",
+      "https://manage.qa.acmuiuc.org",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
     ],
     AadValidClientId: "39c28870-94e4-47ee-b4fb-affe0bf96c9f",

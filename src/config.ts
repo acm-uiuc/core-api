@@ -71,4 +71,10 @@ const environmentConfig: EnvironmentConfigType = {
   },
 };
 
+export type SecretConfig = {
+  jwt_key?: string;
+  discord_guild_id: string;
+  discord_bot_token: string;
+};
+
 export { genericConfig, environmentConfig };

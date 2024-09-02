@@ -11,10 +11,15 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { DatabaseFetchError, DatabaseInsertError } from "../errors/index.js";
+import {
+  BaseError,
+  DatabaseFetchError,
+  DatabaseInsertError,
+  DiscordEventError,
+} from "../errors/index.js";
 import { randomUUID } from "crypto";
 import moment from "moment-timezone";
-import { IUpdateDiscord, updateDiscord } from "./discord.js";
+import { IUpdateDiscord, updateDiscord } from "../functions/discord.js";
 
 // POST
 
@@ -47,6 +52,11 @@ const postRequestSchema = requestSchema.refine(
 );
 
 export type EventPostRequest = z.infer<typeof postRequestSchema>;
+type EventGetRequest = {
+  Params: { id: string };
+  Querystring: undefined;
+  Body: undefined;
+};
 
 const responseJsonSchema = zodToJsonSchema(
   z.object({
@@ -101,7 +111,27 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Item: marshall(entry),
           }),
         );
-        await updateDiscord(entry, false);
+
+        try {
+          if (request.body.featured && !request.body.repeats) {
+            await updateDiscord(entry, false, request.log);
+          }
+        } catch (e: unknown) {
+          // delete DB event if Discord fails.
+          await dynamoClient.send(
+            new DeleteItemCommand({
+              TableName: genericConfig.DynamoTableName,
+              Key: { id: { S: entryUUID } },
+            }),
+          );
+          if (e instanceof Error) {
+            request.log.error(`Failed to publish event to Discord: ${e}`);
+          }
+          if (e instanceof BaseError) {
+            throw e;
+          }
+          throw new DiscordEventError({});
+        }
 
         reply.send({
           id: entryUUID,
@@ -117,11 +147,6 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       }
     },
   );
-  type EventGetRequest = {
-    Params: { id: string };
-    Querystring: undefined;
-    Body: undefined;
-  };
   fastify.get<EventGetRequest>(
     "/:id",
     {
@@ -181,7 +206,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Key: marshall({ id }),
           }),
         );
-        await updateDiscord({ id } as IUpdateDiscord, true);
+        await updateDiscord({ id } as IUpdateDiscord, true, request.log);
         reply.send({
           id,
           resource: `/api/v1/event/${id}`,

@@ -8,9 +8,12 @@ import {
   GuildScheduledEvent,
   GuildScheduledEventStatus,
 } from "discord.js";
-import { type EventPostRequest } from "./events.js";
+import { type EventPostRequest } from "../routes/events.js";
 import moment from "moment";
+import { FastifyBaseLogger } from "fastify";
+import { DiscordEventError } from "../errors/index.js";
 import { getSecretValue } from "../plugins/auth.js";
+import { genericConfig } from "../config.js";
 
 // https://stackoverflow.com/a/3809435/5684541
 // https://calendar-buff.acmuiuc.pages.dev/calendar?id=dd7af73a-3df6-4e12-b228-0d2dac34fda7&date=2024-08-30
@@ -22,23 +25,22 @@ const urlRegex = /https:\/\/[a-z0-9\.-]+\/calendar\?id=([a-f0-9-]+)/;
 export const updateDiscord = async (
   event: IUpdateDiscord,
   isDelete: boolean = false,
-) => {
-  const log = console.log;
-  // If an event isn't featured or repeats, don't handle it.
-  if (!isDelete && (!event.featured || event.repeats !== undefined)) {
-    return;
-  }
-
+  logger: FastifyBaseLogger,
+): Promise<null | GuildScheduledEvent> => {
+  const secretApiConfig =
+    (await getSecretValue(genericConfig.ConfigSecretName)) || {};
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-  const secretApiConfig = (await getSecretValue("infra-core-api-config")) || {};
 
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
-    log(`Logged in as ${readyClient.user.tag}`);
+    logger.info(`Logged in as ${readyClient.user.tag}`);
     const guildID = secretApiConfig["discord_guild_id"];
     const guild = await client.guilds.fetch(guildID?.toString() || "");
     const discordEvents = await guild.scheduledEvents.fetch();
     const snowflakeMeetingLookup = discordEvents.reduce(
-      (o, event) => {
+      (
+        o: Record<string, GuildScheduledEvent<GuildScheduledEventStatus>>,
+        event: GuildScheduledEvent<GuildScheduledEventStatus>,
+      ) => {
         const { description } = event;
         // Find url in description using regex and extract the slug
         const url = (description || "").match(urlRegex);
@@ -59,10 +61,10 @@ export const updateDiscord = async (
       if (existingMetadata) {
         await guild.scheduledEvents.delete(existingMetadata.id);
       } else {
-        log(`Event with id ${id} not found in Discord`);
+        logger.warn(`Event with id ${id} not found in Discord`);
       }
       await client.destroy();
-      return;
+      return null;
     }
 
     // Handle creation or update
@@ -88,15 +90,17 @@ export const updateDiscord = async (
 
     if (existingMetadata) {
       if (existingMetadata.creator?.bot !== true) {
-        log(`Refusing to edit non-bot event "${title}"`);
+        logger.warn(`Refusing to edit non-bot event "${title}"`);
       } else {
         await guild.scheduledEvents.edit(existingMetadata.id, options);
+        return options;
       }
     } else {
       if (options.scheduledStartTime < new Date()) {
-        log(`Refusing to create past event "${title}"`);
+        logger.warn(`Refusing to create past event "${title}"`);
       } else {
         await guild.scheduledEvents.create(options);
+        return options;
       }
     }
 
@@ -106,9 +110,10 @@ export const updateDiscord = async (
   const token = secretApiConfig["discord_bot_token"];
 
   if (!token) {
-    log("No Discord bot token found in secrets");
-    return;
+    logger.error("No Discord bot token found in secrets!");
+    throw new DiscordEventError({});
   }
 
   client.login(token.toString());
+  return null;
 };

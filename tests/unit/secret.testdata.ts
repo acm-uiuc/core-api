@@ -1,6 +1,10 @@
+import { SecretConfig } from "../../src/config.js";
+
 const secretObject = {
   jwt_key: "somethingreallysecret",
-};
+  discord_guild_id: "12345",
+  discord_bot_token: "12345",
+} as SecretConfig & { jwt_key: string };
 
 const secretJson = JSON.stringify(secretObject);
 

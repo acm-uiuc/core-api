@@ -69,8 +69,8 @@ export const updateDiscord = async (
 
     // Handle creation or update
     const { title, description, start, end, location, host } = event;
-    const date = moment(start).tz("America/Chicago").format("YYYY-MM-DD");
-    const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${date}`;
+    const dateStart = moment(start).tz("America/Chicago").format("YYYY-MM-DD");
+    const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${dateStart}`;
     const fullDescription = `${calendarURL}\n${description}`;
     const fullTitle = title.toLowerCase().includes(host.toLowerCase())
       ? title
@@ -81,7 +81,7 @@ export const updateDiscord = async (
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       name: fullTitle,
       description: fullDescription,
-      scheduledStartTime: moment(start).tz("America/Chicago").toDate(),
+      scheduledStartTime: dateStart,
       scheduledEndTime: end && moment(end).tz("America/Chicago").toDate(),
       entityMetadata: {
         location,

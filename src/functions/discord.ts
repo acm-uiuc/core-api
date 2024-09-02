@@ -69,8 +69,8 @@ export const updateDiscord = async (
 
     // Handle creation or update
     const { title, description, start, end, location, host } = event;
-    const date = moment(start).tz("America/Chicago").format("YYYY-MM-DD");
-    const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${date}`;
+    const dateStart = moment(start).format("YYYY-MM-DD");
+    const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${dateStart}`;
     const fullDescription = `${calendarURL}\n${description}`;
     const fullTitle = title.toLowerCase().includes(host.toLowerCase())
       ? title
@@ -81,8 +81,8 @@ export const updateDiscord = async (
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       name: fullTitle,
       description: fullDescription,
-      scheduledStartTime: moment(start).tz("America/Chicago").toDate(),
-      scheduledEndTime: end && moment(end).tz("America/Chicago").toDate(),
+      scheduledStartTime: moment(start).toDate(),
+      scheduledEndTime: end && moment(end).toDate(),
       entityMetadata: {
         location,
       },
@@ -93,18 +93,17 @@ export const updateDiscord = async (
         logger.warn(`Refusing to edit non-bot event "${title}"`);
       } else {
         await guild.scheduledEvents.edit(existingMetadata.id, options);
-        return options;
       }
     } else {
       if (options.scheduledStartTime < new Date()) {
         logger.warn(`Refusing to create past event "${title}"`);
       } else {
         await guild.scheduledEvents.create(options);
-        return options;
       }
     }
 
     await client.destroy();
+    return options;
   });
 
   const token = secretApiConfig["discord_bot_token"];

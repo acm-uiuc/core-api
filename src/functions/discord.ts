@@ -93,18 +93,17 @@ export const updateDiscord = async (
         logger.warn(`Refusing to edit non-bot event "${title}"`);
       } else {
         await guild.scheduledEvents.edit(existingMetadata.id, options);
-        return options;
       }
     } else {
       if (options.scheduledStartTime < new Date()) {
         logger.warn(`Refusing to create past event "${title}"`);
       } else {
         await guild.scheduledEvents.create(options);
-        return options;
       }
     }
 
     await client.destroy();
+    return options;
   });
 
   const token = secretApiConfig["discord_bot_token"];

@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf dist/ && tsc",
-    "dev": "tsx watch src/index.ts",
+    "dev": "touch .env && tsx watch src/index.ts",
     "build:lambda": "yarn build && cp package.json dist/src/ && yarn lockfile-manage",
     "lockfile-manage": "synp --source-file yarn.lock && cp package-lock.json dist/src/ && rm package-lock.json",
     "typecheck": "tsc --noEmit",
@@ -58,6 +58,8 @@
     "@fastify/aws-lambda": "^4.1.0",
     "@fastify/cors": "^9.0.1",
     "@touch4it/ical-timezones": "^1.9.0",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "ical-generator": "^7.2.0",
@@ -68,5 +70,6 @@
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2",
     "zod-validation-error": "^3.3.1"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }

@@ -111,3 +111,14 @@ export class DatabaseFetchError extends BaseError<"DatabaseFetchError"> {
     });
   }
 }
+
+export class DiscordEventError extends BaseError<"DiscordEventError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "DiscordEventError",
+      id: 107,
+      message: message || "Could not create Discord event.",
+      httpStatusCode: 500,
+    });
+  }
+}

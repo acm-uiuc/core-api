@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const username = process.env.JWTGEN_USERNAME || 'infra@acm.illinois.edu'
 const payload = {

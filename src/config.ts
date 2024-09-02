@@ -47,6 +47,7 @@ const environmentConfig: EnvironmentConfigType = {
     ValidCorsOrigins: [
       "http://localhost:3000",
       "http://localhost:5173",
+      "http://localhost:5174",
       "https://merch-pwa.pages.dev",
       "https://manage.qa.acmuiuc.org",
       /^https:\/\/(?:.*\.)?acmuiuc\.pages\.dev$/,
@@ -68,6 +69,12 @@ const environmentConfig: EnvironmentConfigType = {
     ],
     AadValidClientId: "5e08cf0f-53bb-4e09-9df2-e9bdc3467296",
   },
+};
+
+export type SecretConfig = {
+  jwt_key?: string;
+  discord_guild_id: string;
+  discord_bot_token: string;
 };
 
 export { genericConfig, environmentConfig };

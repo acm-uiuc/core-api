@@ -156,7 +156,7 @@ test("Happy path: Adding a non-repeating, featured, paid event", async () => {
   const uuid = responseDataJson["id"];
   expect(responseDataJson).toEqual({
     id: uuid,
-    resource: `/api/v1/event/${uuid}`,
+    resource: `/api/v1/events/${uuid}`,
   });
 });
 
@@ -188,7 +188,7 @@ test("Happy path: Adding a weekly repeating, non-featured, paid event", async ()
   const uuid = responseDataJson["id"];
   expect(responseDataJson).toEqual({
     id: uuid,
-    resource: `/api/v1/event/${uuid}`,
+    resource: `/api/v1/events/${uuid}`,
   });
 });
 

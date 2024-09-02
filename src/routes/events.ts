@@ -6,14 +6,22 @@ import { OrganizationList } from "../orgs.js";
 import {
   DeleteItemCommand,
   DynamoDBClient,
+  GetItemCommand,
   PutItemCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { DatabaseFetchError, DatabaseInsertError } from "../errors/index.js";
+import {
+  BaseError,
+  DatabaseFetchError,
+  DatabaseInsertError,
+  DiscordEventError,
+  ValidationError,
+} from "../errors/index.js";
 import { randomUUID } from "crypto";
 import moment from "moment-timezone";
+import { IUpdateDiscord, updateDiscord } from "../functions/discord.js";
 
 // POST
 
@@ -45,7 +53,12 @@ const postRequestSchema = requestSchema.refine(
   },
 );
 
-type EventPostRequest = z.infer<typeof postRequestSchema>;
+export type EventPostRequest = z.infer<typeof postRequestSchema>;
+type EventGetRequest = {
+  Params: { id: string };
+  Querystring: undefined;
+  Body: undefined;
+};
 
 const responseJsonSchema = zodToJsonSchema(
   z.object({
@@ -86,26 +99,78 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     },
     async (request, reply) => {
       try {
-        const entryUUID =
-          (request.params as Record<string, string>).id ||
-          randomUUID().toString();
+        let originalEvent;
+        const userProvidedId = (
+          request.params as Record<string, string | undefined>
+        ).id;
+        const entryUUID = userProvidedId || randomUUID();
+        if (userProvidedId) {
+          const response = await dynamoClient.send(
+            new GetItemCommand({
+              TableName: genericConfig.DynamoTableName,
+              Key: { id: { S: userProvidedId } },
+            }),
+          );
+          if (!response.Item) {
+            throw new ValidationError({
+              message: `${userProvidedId} is not a valid event ID.`,
+            });
+          } else {
+            originalEvent = response.Item;
+          }
+        }
+        const entry = {
+          ...request.body,
+          id: entryUUID,
+          createdBy: request.username,
+        };
         await dynamoClient.send(
           new PutItemCommand({
             TableName: genericConfig.DynamoTableName,
-            Item: marshall({
-              ...request.body,
-              id: entryUUID,
-              createdBy: request.username,
-            }),
+            Item: marshall(entry),
           }),
         );
+
+        try {
+          if (request.body.featured && !request.body.repeats) {
+            await updateDiscord(entry, false, request.log);
+          }
+        } catch (e: unknown) {
+          // restore original DB status if Discord fails.
+          await dynamoClient.send(
+            new DeleteItemCommand({
+              TableName: genericConfig.DynamoTableName,
+              Key: { id: { S: entryUUID } },
+            }),
+          );
+          if (userProvidedId) {
+            await dynamoClient.send(
+              new PutItemCommand({
+                TableName: genericConfig.DynamoTableName,
+                Item: originalEvent,
+              }),
+            );
+          }
+
+          if (e instanceof Error) {
+            request.log.error(`Failed to publish event to Discord: ${e}`);
+          }
+          if (e instanceof BaseError) {
+            throw e;
+          }
+          throw new DiscordEventError({});
+        }
+
         reply.send({
           id: entryUUID,
-          resource: `/api/v1/event/${entryUUID}`,
+          resource: `/api/v1/events/${entryUUID}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
           request.log.error("Failed to insert to DynamoDB: " + e.toString());
+        }
+        if (e instanceof BaseError) {
+          throw e;
         }
         throw new DatabaseInsertError({
           message: "Failed to insert event to Dynamo table.",
@@ -113,11 +178,6 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       }
     },
   );
-  type EventGetRequest = {
-    Params: { id: string };
-    Querystring: undefined;
-    Body: undefined;
-  };
   fastify.get<EventGetRequest>(
     "/:id",
     {
@@ -177,9 +237,10 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Key: marshall({ id }),
           }),
         );
+        await updateDiscord({ id } as IUpdateDiscord, true, request.log);
         reply.send({
           id,
-          resource: `/api/v1/event/${id}`,
+          resource: `/api/v1/events/${id}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {

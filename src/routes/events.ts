@@ -240,7 +240,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         await updateDiscord({ id } as IUpdateDiscord, true, request.log);
         reply.send({
           id,
-          resource: `/api/v1/event/${id}`,
+          resource: `/api/v1/events/${id}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {

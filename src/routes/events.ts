@@ -6,6 +6,7 @@ import { OrganizationList } from "../orgs.js";
 import {
   DeleteItemCommand,
   DynamoDBClient,
+  GetItemCommand,
   PutItemCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
@@ -16,6 +17,7 @@ import {
   DatabaseFetchError,
   DatabaseInsertError,
   DiscordEventError,
+  ValidationError,
 } from "../errors/index.js";
 import { randomUUID } from "crypto";
 import moment from "moment-timezone";
@@ -97,9 +99,26 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     },
     async (request, reply) => {
       try {
-        const entryUUID =
-          (request.params as Record<string, string>).id ||
-          randomUUID().toString();
+        let originalEvent;
+        const userProvidedId = (
+          request.params as Record<string, string | undefined>
+        ).id;
+        const entryUUID = userProvidedId || randomUUID();
+        if (userProvidedId) {
+          const response = await dynamoClient.send(
+            new GetItemCommand({
+              TableName: genericConfig.DynamoTableName,
+              Key: { id: { S: userProvidedId } },
+            }),
+          );
+          if (!response.Item) {
+            throw new ValidationError({
+              message: `${userProvidedId} is not a valid event ID.`,
+            });
+          } else {
+            originalEvent = response.Item;
+          }
+        }
         const entry = {
           ...request.body,
           id: entryUUID,
@@ -117,13 +136,22 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             await updateDiscord(entry, false, request.log);
           }
         } catch (e: unknown) {
-          // delete DB event if Discord fails.
+          // restore original DB status if Discord fails.
           await dynamoClient.send(
             new DeleteItemCommand({
               TableName: genericConfig.DynamoTableName,
               Key: { id: { S: entryUUID } },
             }),
           );
+          if (userProvidedId) {
+            await dynamoClient.send(
+              new PutItemCommand({
+                TableName: genericConfig.DynamoTableName,
+                Item: originalEvent,
+              }),
+            );
+          }
+
           if (e instanceof Error) {
             request.log.error(`Failed to publish event to Discord: ${e}`);
           }
@@ -135,11 +163,14 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
         reply.send({
           id: entryUUID,
-          resource: `/api/v1/event/${entryUUID}`,
+          resource: `/api/v1/events/${entryUUID}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
           request.log.error("Failed to insert to DynamoDB: " + e.toString());
+        }
+        if (e instanceof BaseError) {
+          throw e;
         }
         throw new DatabaseInsertError({
           message: "Failed to insert event to Dynamo table.",

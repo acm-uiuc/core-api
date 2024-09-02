@@ -14,6 +14,8 @@ import { environmentConfig } from "./config.js";
 import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
 import vendingPlugin from "./routes/vending.js";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const now = () => Date.now();
 

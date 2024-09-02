@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf dist/ && tsc",
-    "dev": "touch .env && tsx watch --env-file=.env src/index.ts",
+    "dev": "touch .env && tsx watch src/index.ts",
     "build:lambda": "yarn build && cp package.json dist/src/ && yarn lockfile-manage",
     "lockfile-manage": "synp --source-file yarn.lock && cp package-lock.json dist/src/ && rm package-lock.json",
     "typecheck": "tsc --noEmit",
@@ -59,6 +59,7 @@
     "@fastify/cors": "^9.0.1",
     "@touch4it/ical-timezones": "^1.9.0",
     "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "ical-generator": "^7.2.0",

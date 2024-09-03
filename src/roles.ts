@@ -5,3 +5,6 @@ export enum AppRoles {
   EVENTS_MANAGER = "manage:events",
   PUBLIC = "public",
 }
+export const allAppRoles = Object.values(AppRoles).filter(
+  (value) => typeof value === "string",
+);

@@ -111,18 +111,21 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
               Key: { id: { S: userProvidedId } },
             }),
           );
-          if (!response.Item) {
+          originalEvent = response.Item;
+          if (!originalEvent) {
             throw new ValidationError({
               message: `${userProvidedId} is not a valid event ID.`,
             });
-          } else {
-            originalEvent = response.Item;
           }
         }
         const entry = {
           ...request.body,
           id: entryUUID,
           createdBy: request.username,
+          createdAt: originalEvent
+            ? originalEvent.createdAt || new Date()
+            : new Date(),
+          updatedAt: new Date(),
         };
         await dynamoClient.send(
           new PutItemCommand({

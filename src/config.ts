@@ -1,4 +1,4 @@
-import { AppRoles, RunEnvironment } from "./roles.js";
+import { allAppRoles, AppRoles, RunEnvironment } from "./roles.js";
 import { OriginFunction } from "@fastify/cors";
 
 // From @fastify/cors
@@ -37,10 +37,10 @@ const genericConfig: GenericConfigType = {
 const environmentConfig: EnvironmentConfigType = {
   dev: {
     GroupRoleMapping: {
-      "48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.EVENTS_MANAGER], // Infra Chairs
-      "940e4f9e-6891-4e28-9e29-148798495cdb": [AppRoles.EVENTS_MANAGER], // ACM Infra Team
-      "f8dfc4cf-456b-4da3-9053-f7fdeda5d5d6": [AppRoles.EVENTS_MANAGER], // Infra Leads
-      "0": [AppRoles.EVENTS_MANAGER], // Dummy Group for development only
+      "48591dbc-cdcb-4544-9f63-e6b92b067e33": allAppRoles, // Infra Chairs
+      "940e4f9e-6891-4e28-9e29-148798495cdb": allAppRoles, // ACM Infra Team
+      "f8dfc4cf-456b-4da3-9053-f7fdeda5d5d6": allAppRoles, // Infra Leads
+      "0": allAppRoles, // Dummy Group for development only
       "1": [AppRoles.PUBLIC], // Dummy Group for development only
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
@@ -56,8 +56,8 @@ const environmentConfig: EnvironmentConfigType = {
   },
   prod: {
     GroupRoleMapping: {
-      "48591dbc-cdcb-4544-9f63-e6b92b067e33": [AppRoles.EVENTS_MANAGER], // Infra Chairs
-      "ff49e948-4587-416b-8224-65147540d5fc": [AppRoles.EVENTS_MANAGER], // Officers
+      "48591dbc-cdcb-4544-9f63-e6b92b067e33": allAppRoles, // Infra Chairs
+      "ff49e948-4587-416b-8224-65147540d5fc": allAppRoles, // Officers
       "ad81254b-4eeb-4c96-8191-3acdce9194b1": [AppRoles.EVENTS_MANAGER], // Exec
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },

@@ -82,7 +82,6 @@ export const updateDiscord = async (
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       name: fullTitle,
       description: fullDescription,
-      image: existingMetadata?.coverImageURL({}) || undefined,
       scheduledStartTime: moment.tz(start, "America/Chicago").utc().toDate(),
       scheduledEndTime: end && moment.tz(end, "America/Chicago").utc().toDate(),
       image: existingMetadata?.coverImageURL({}) || undefined,

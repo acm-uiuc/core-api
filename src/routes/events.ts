@@ -8,6 +8,7 @@ import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
+  QueryCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
@@ -111,18 +112,21 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
               Key: { id: { S: userProvidedId } },
             }),
           );
-          if (!response.Item) {
+          originalEvent = response.Item;
+          if (!originalEvent) {
             throw new ValidationError({
               message: `${userProvidedId} is not a valid event ID.`,
             });
-          } else {
-            originalEvent = response.Item;
           }
         }
         const entry = {
           ...request.body,
           id: entryUUID,
           createdBy: request.username,
+          createdAt: originalEvent
+            ? originalEvent.createdAt || new Date().toISOString()
+            : new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         await dynamoClient.send(
           new PutItemCommand({
@@ -189,9 +193,9 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       const id = request.params.id;
       try {
         const response = await dynamoClient.send(
-          new ScanCommand({
+          new QueryCommand({
             TableName: genericConfig.DynamoTableName,
-            FilterExpression: "#id = :id",
+            KeyConditionExpression: "#id = :id",
             ExpressionAttributeNames: {
               "#id": "id",
             },

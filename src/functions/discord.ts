@@ -9,7 +9,8 @@ import {
   GuildScheduledEventStatus,
 } from "discord.js";
 import { type EventPostRequest } from "../routes/events.js";
-import moment from "moment";
+import moment from "moment-timezone";
+
 import { FastifyBaseLogger } from "fastify";
 import { DiscordEventError } from "../errors/index.js";
 import { getSecretValue } from "../plugins/auth.js";
@@ -69,7 +70,7 @@ export const updateDiscord = async (
 
     // Handle creation or update
     const { title, description, start, end, location, host } = event;
-    const dateStart = moment(start).format("YYYY-MM-DD");
+    const dateStart = moment.tz(start, "America/Chicago").format("YYYY-MM-DD");
     const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${dateStart}`;
     const fullDescription = `${calendarURL}\n${description}`;
     const fullTitle = title.toLowerCase().includes(host.toLowerCase())
@@ -81,8 +82,8 @@ export const updateDiscord = async (
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       name: fullTitle,
       description: fullDescription,
-      scheduledStartTime: moment(start).utc().toDate(),
-      scheduledEndTime: end && moment(end).utc().toDate(),
+      scheduledStartTime: moment.tz(start, "America/Chicago").utc().toDate(),
+      scheduledEndTime: end && moment.tz(end, "America/Chicago").utc().toDate(),
       entityMetadata: {
         location,
       },

@@ -73,7 +73,7 @@ export class NotFoundError extends BaseError<"NotFoundError"> {
     super({
       name: "NotFoundError",
       id: 103,
-      message: `${endpointName} is not a valid URL.`,
+      message: `${endpointName} is not a valid resource.`,
       httpStatusCode: 404,
     });
   }
@@ -112,11 +112,22 @@ export class DatabaseFetchError extends BaseError<"DatabaseFetchError"> {
   }
 }
 
+export class DatabaseDeleteError extends BaseError<"DatabaseDeleteError"> {
+  constructor({ message }: { message: string }) {
+    super({
+      name: "DatabaseDeleteError",
+      id: 107,
+      message,
+      httpStatusCode: 500,
+    });
+  }
+}
+
 export class DiscordEventError extends BaseError<"DiscordEventError"> {
   constructor({ message }: { message?: string }) {
     super({
       name: "DiscordEventError",
-      id: 107,
+      id: 108,
       message: message || "Could not create Discord event.",
       httpStatusCode: 500,
     });

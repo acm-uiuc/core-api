@@ -24,6 +24,13 @@ declare module "fastify" {
   interface FastifyRequest {
     startTime: number;
     username?: string;
+    userRoles?: Set<string>;
     tokenPayload?: AadToken;
   }
 }
+
+export type NoDataRequest = {
+  Params: undefined;
+  Querystring: undefined;
+  Body: undefined;
+};

@@ -58,7 +58,10 @@ const environmentConfig: EnvironmentConfigType = {
     GroupRoleMapping: {
       "48591dbc-cdcb-4544-9f63-e6b92b067e33": allAppRoles, // Infra Chairs
       "ff49e948-4587-416b-8224-65147540d5fc": allAppRoles, // Officers
-      "ad81254b-4eeb-4c96-8191-3acdce9194b1": [AppRoles.EVENTS_MANAGER], // Exec
+      "ad81254b-4eeb-4c96-8191-3acdce9194b1": [
+        AppRoles.EVENTS_MANAGER,
+        AppRoles.LINKS_MANAGER,
+      ], // Exec
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [
@@ -75,6 +78,7 @@ export type SecretConfig = {
   jwt_key?: string;
   discord_guild_id: string;
   discord_bot_token: string;
+  postgres_url: string;
 };
 
 export { genericConfig, environmentConfig };

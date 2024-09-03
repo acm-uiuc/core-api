@@ -13,9 +13,9 @@ import {
   UnauthenticatedError,
   UnauthorizedError,
 } from "../errors/index.js";
-import { genericConfig } from "../config.js";
+import { genericConfig, SecretConfig } from "../config.js";
 
-function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
+export function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
   const _intersection = new Set<T>();
   for (const elem of setB) {
     if (setA.has(elem)) {
@@ -57,7 +57,7 @@ const smClient = new SecretsManagerClient({
 
 export const getSecretValue = async (
   secretId: string,
-): Promise<Record<string, string | number | boolean> | null> => {
+): Promise<SecretConfig | null> => {
   const data = await smClient.send(
     new GetSecretValueCommand({ SecretId: secretId }),
   );
@@ -65,10 +65,7 @@ export const getSecretValue = async (
     return null;
   }
   try {
-    return JSON.parse(data.SecretString) as Record<
-      string,
-      string | number | boolean
-    >;
+    return JSON.parse(data.SecretString) as SecretConfig;
   } catch {
     return null;
   }
@@ -216,6 +213,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           message: "Invalid token.",
         });
       }
+      request.userRoles = userRoles;
       return userRoles;
     },
   );

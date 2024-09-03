@@ -15,6 +15,7 @@ import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
 import vendingPlugin from "./routes/vending.js";
 import * as dotenv from "dotenv";
+import linkryRoutes from "./routes/linkry.js";
 dotenv.config();
 
 const now = () => Date.now();
@@ -70,6 +71,7 @@ async function init() {
       api.register(protectedRoute, { prefix: "/protected" });
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
+      api.register(linkryRoutes, { prefix: "/linkry" });
       api.register(icalPlugin, { prefix: "/ical" });
       if (app.runEnvironment === "dev") {
         api.register(vendingPlugin, { prefix: "/vending" });
@@ -84,13 +86,4 @@ async function init() {
   return app;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  // local development
-  const app = await init();
-  app.listen({ port: 8080 }, (err) => {
-    /* eslint no-console: ["error", {"allow": ["log", "error"]}] */
-    if (err) console.error(err);
-    console.log("Server listening on 8080");
-  });
-}
 export default init;

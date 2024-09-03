@@ -27,10 +27,11 @@ export const updateDiscord = async (
   event: IUpdateDiscord,
   isDelete: boolean = false,
   logger: FastifyBaseLogger,
-): Promise<null | GuildScheduledEvent> => {
+): Promise<null | GuildScheduledEventCreateOptions> => {
   const secretApiConfig =
     (await getSecretValue(genericConfig.ConfigSecretName)) || {};
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  let payload: GuildScheduledEventCreateOptions | null = null;
 
   client.once(Events.ClientReady, async (readyClient: Client<true>) => {
     logger.info(`Logged in as ${readyClient.user.tag}`);
@@ -53,7 +54,6 @@ export const updateDiscord = async (
       },
       {} as Record<string, GuildScheduledEvent<GuildScheduledEventStatus>>,
     );
-
     const { id } = event;
 
     const existingMetadata = snowflakeMeetingLookup[id];
@@ -77,11 +77,12 @@ export const updateDiscord = async (
       ? title
       : `${host} - ${title}`;
 
-    const options: GuildScheduledEventCreateOptions = {
+    payload = {
       entityType: GuildScheduledEventEntityType.External,
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       name: fullTitle,
       description: fullDescription,
+      image: existingMetadata?.coverImageURL({}) || undefined,
       scheduledStartTime: moment.tz(start, "America/Chicago").utc().toDate(),
       scheduledEndTime: end && moment.tz(end, "America/Chicago").utc().toDate(),
       entityMetadata: {
@@ -93,18 +94,18 @@ export const updateDiscord = async (
       if (existingMetadata.creator?.bot !== true) {
         logger.warn(`Refusing to edit non-bot event "${title}"`);
       } else {
-        await guild.scheduledEvents.edit(existingMetadata.id, options);
+        await guild.scheduledEvents.edit(existingMetadata.id, payload);
       }
     } else {
-      if (options.scheduledStartTime < new Date()) {
+      if (payload.scheduledStartTime < new Date()) {
         logger.warn(`Refusing to create past event "${title}"`);
       } else {
-        await guild.scheduledEvents.create(options);
+        await guild.scheduledEvents.create(payload);
       }
     }
 
     await client.destroy();
-    return options;
+    return payload;
   });
 
   const token = secretApiConfig["discord_bot_token"];
@@ -115,5 +116,5 @@ export const updateDiscord = async (
   }
 
   client.login(token.toString());
-  return null;
+  return payload;
 };

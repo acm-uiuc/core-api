@@ -72,7 +72,7 @@ export const updateDiscord = async (
     const { title, description, start, end, location, host } = event;
     const dateStart = moment.tz(start, "America/Chicago").format("YYYY-MM-DD");
     const calendarURL = `https://www.acm.illinois.edu/calendar?id=${id}&date=${dateStart}`;
-    const fullDescription = `${calendarURL}\n${description}`;
+    const fullDescription = `${description}\n${calendarURL}`;
     const fullTitle = title.toLowerCase().includes(host.toLowerCase())
       ? title
       : `${host} - ${title}`;
@@ -85,6 +85,7 @@ export const updateDiscord = async (
       image: existingMetadata?.coverImageURL({}) || undefined,
       scheduledStartTime: moment.tz(start, "America/Chicago").utc().toDate(),
       scheduledEndTime: end && moment.tz(end, "America/Chicago").utc().toDate(),
+      image: existingMetadata?.coverImageURL({}) || undefined,
       entityMetadata: {
         location,
       },

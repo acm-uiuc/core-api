@@ -41,7 +41,7 @@ const environmentConfig: EnvironmentConfigType = {
       "940e4f9e-6891-4e28-9e29-148798495cdb": allAppRoles, // ACM Infra Team
       "f8dfc4cf-456b-4da3-9053-f7fdeda5d5d6": allAppRoles, // Infra Leads
       "0": allAppRoles, // Dummy Group for development only
-      "1": [AppRoles.PUBLIC], // Dummy Group for development only
+      "1": [], // Dummy Group for development only
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [

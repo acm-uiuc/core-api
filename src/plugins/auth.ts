@@ -13,7 +13,7 @@ import {
   UnauthenticatedError,
   UnauthorizedError,
 } from "../errors/index.js";
-import { genericConfig, SecretConfig } from "../config.js";
+import { genericConfig, KnownAzureGroupId, SecretConfig } from "../config.js";
 
 export function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
   const _intersection = new Set<T>();
@@ -161,10 +161,12 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           fastify.environmentConfig.GroupRoleMapping
         ) {
           for (const group of verifiedTokenData.groups) {
-            if (fastify.environmentConfig["GroupRoleMapping"][group]) {
-              for (const role of fastify.environmentConfig["GroupRoleMapping"][
-                group
-              ]) {
+            const roles =
+              fastify.environmentConfig["GroupRoleMapping"][
+                group as KnownAzureGroupId
+              ];
+            if (roles) {
+              for (const role of roles) {
                 userRoles.add(role);
               }
             }
@@ -175,10 +177,10 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
             fastify.environmentConfig.AzureRoleMapping
           ) {
             for (const group of verifiedTokenData.roles) {
-              if (fastify.environmentConfig["AzureRoleMapping"][group]) {
-                for (const role of fastify.environmentConfig[
-                  "AzureRoleMapping"
-                ][group]) {
+              const roles =
+                fastify.environmentConfig["AzureRoleMapping"][group];
+              if (roles) {
+                for (const role of roles) {
                   userRoles.add(role);
                 }
               }

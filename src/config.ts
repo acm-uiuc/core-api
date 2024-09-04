@@ -6,7 +6,9 @@ type ArrayOfValueOrArray<T> = Array<ValueOrArray<T>>;
 type OriginType = string | boolean | RegExp;
 type ValueOrArray<T> = T | ArrayOfValueOrArray<T>;
 
-type GroupRoleMapping = Record<string, readonly AppRoles[]>;
+type GroupRoleMapping = {
+  [K in KnownAzureGroupId]?: readonly AppRoles[];
+};
 type AzureRoleMapping = Record<string, readonly AppRoles[]>;
 
 export type ConfigType = {
@@ -26,6 +28,18 @@ type GenericConfigType = {
 type EnvironmentConfigType = {
   [env in RunEnvironment]: ConfigType;
 };
+
+export const GroupNameMapping = {
+  "48591dbc-cdcb-4544-9f63-e6b92b067e33": "Infra Chairs",
+  "940e4f9e-6891-4e28-9e29-148798495cdb": "Infra Team",
+  "f8dfc4cf-456b-4da3-9053-f7fdeda5d5d6": "Infra Leads",
+  "ff49e948-4587-416b-8224-65147540d5fc": "Officers",
+  "ad81254b-4eeb-4c96-8191-3acdce9194b1": "ACM Exec",
+  "0": "Testing Admin",
+  "1": "Testing Public",
+};
+
+export type KnownAzureGroupId = keyof typeof GroupNameMapping;
 
 const genericConfig: GenericConfigType = {
   DynamoTableName: "infra-core-api-events",

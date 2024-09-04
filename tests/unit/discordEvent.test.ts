@@ -1,4 +1,4 @@
-import { afterAll, expect, test, beforeEach, vi, Mock } from "vitest";
+import { afterAll, expect, test, beforeEach, vi, Mock, it } from "vitest";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
@@ -31,7 +31,7 @@ const app = await init();
 
 // TODO: add discord reject test
 describe("Test Events <-> Discord integration", () => {
-  test("Happy path: valid publish submission.", async () => {
+  it("Happy path: valid publish submission.", async () => {
     ddbMock.on(PutItemCommand).resolves({});
     smMock.on(GetSecretValueCommand).resolves({
       SecretString: secretJson,
@@ -55,7 +55,7 @@ describe("Test Events <-> Discord integration", () => {
     expect((updateDiscord as Mock).mock.calls.length).toBe(1);
   });
 
-  test("Happy path: do not publish repeating events.", async () => {
+  it("Happy path: do not publish repeating events.", async () => {
     ddbMock.on(PutItemCommand).resolves({});
     smMock.on(GetSecretValueCommand).resolves({
       SecretString: secretJson,

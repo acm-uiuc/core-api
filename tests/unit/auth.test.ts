@@ -8,7 +8,7 @@ import init from "../../src/index.js";
 import { secretJson, secretObject, jwtPayload } from "./secret.testdata.js";
 import jwt from "jsonwebtoken";
 
-const ddbMock = mockClient(SecretsManagerClient);
+const smMock = mockClient(SecretsManagerClient);
 
 const app = await init();
 const jwt_secret = secretObject["jwt_key"];
@@ -34,7 +34,7 @@ vi.stubEnv("JwtSigningKey", jwt_secret);
 const testJwt = createJwt();
 
 test("Test happy path", async () => {
-  ddbMock.on(GetSecretValueCommand).resolves({
+  smMock.on(GetSecretValueCommand).resolves({
     SecretString: secretJson,
   });
   const response = await app.inject({

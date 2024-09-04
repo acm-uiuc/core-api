@@ -28,8 +28,7 @@ export const updateDiscord = async (
   isDelete: boolean = false,
   logger: FastifyBaseLogger,
 ): Promise<null | GuildScheduledEventCreateOptions> => {
-  const secretApiConfig =
-    (await getSecretValue(genericConfig.ConfigSecretName)) || {};
+  const secretApiConfig = await getSecretValue(genericConfig.ConfigSecretName);
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
   let payload: GuildScheduledEventCreateOptions | null = null;
 

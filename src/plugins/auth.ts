@@ -57,17 +57,19 @@ const smClient = new SecretsManagerClient({
 
 export const getSecretValue = async (
   secretId: string,
-): Promise<SecretConfig | null> => {
+): Promise<SecretConfig> => {
   const data = await smClient.send(
     new GetSecretValueCommand({ SecretId: secretId }),
   );
   if (!data.SecretString) {
-    return null;
+    throw new InternalServerError({ message: "config secret is invalid." });
   }
   try {
     return JSON.parse(data.SecretString) as SecretConfig;
   } catch {
-    return null;
+    throw new InternalServerError({
+      message: "config secret cannot be parsed as JSON.",
+    });
   }
 };
 

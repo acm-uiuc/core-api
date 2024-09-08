@@ -14,7 +14,8 @@ const vendingPlugin: FastifyPluginAsync = async (fastify, _options) => {
     reply.send({
       items: [
         {
-          rowid: 1,
+          slots: ["A1"],
+          id: "ronitpic",
           name: "A Picture of Ronit",
           image_url: "https://acm-brand-images.s3.amazonaws.com/ronit.jpeg",
           price: 999,

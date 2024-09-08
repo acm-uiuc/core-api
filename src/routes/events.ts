@@ -309,7 +309,12 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             }
           });
         }
-        reply.send(parsedItems);
+        reply
+          .header(
+            "cache-control",
+            "public, max-age=7200, stale-while-revalidate=900, stale-if-error=86400",
+          )
+          .send(parsedItems);
       } catch (e: unknown) {
         if (e instanceof Error) {
           request.log.error("Failed to get from DynamoDB: " + e.toString());

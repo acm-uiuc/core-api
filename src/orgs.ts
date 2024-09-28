@@ -22,5 +22,6 @@ export const CommitteeList = [
   "Infrastructure Committee",
   "Social Committee",
   "Mentorship Committee",
+  "Academic Committee"
 ] as const;
 export const OrganizationList = ["ACM", ...SIGList, ...CommitteeList];

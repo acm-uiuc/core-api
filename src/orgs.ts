@@ -16,12 +16,15 @@ export const SIGList = [
   "SIGPolicy",
   "SIGARCH",
   "SIGRobotics",
+  "SIGtricity",
 ] as const;
 
 export const CommitteeList = [
   "Infrastructure Committee",
   "Social Committee",
   "Mentorship Committee",
-  "Academic Committee"
+  "Academic Committee",
+  "Corporate Committee",
+  "Marketing Committee",
 ] as const;
 export const OrganizationList = ["ACM", ...SIGList, ...CommitteeList];

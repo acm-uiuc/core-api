@@ -13,9 +13,9 @@ import {
   UnauthenticatedError,
   UnauthorizedError,
 } from "../errors/index.js";
-import { genericConfig } from "../config.js";
+import { genericConfig, KnownAzureGroupId, SecretConfig } from "../config.js";
 
-function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
+export function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
   const _intersection = new Set<T>();
   for (const elem of setB) {
     if (setA.has(elem)) {
@@ -57,20 +57,19 @@ const smClient = new SecretsManagerClient({
 
 export const getSecretValue = async (
   secretId: string,
-): Promise<Record<string, string | number | boolean> | null> => {
+): Promise<SecretConfig> => {
   const data = await smClient.send(
     new GetSecretValueCommand({ SecretId: secretId }),
   );
   if (!data.SecretString) {
-    return null;
+    throw new InternalServerError({ message: "config secret is invalid." });
   }
   try {
-    return JSON.parse(data.SecretString) as Record<
-      string,
-      string | number | boolean
-    >;
+    return JSON.parse(data.SecretString) as SecretConfig;
   } catch {
-    return null;
+    throw new InternalServerError({
+      message: "config secret cannot be parsed as JSON.",
+    });
   }
 };
 
@@ -164,10 +163,12 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           fastify.environmentConfig.GroupRoleMapping
         ) {
           for (const group of verifiedTokenData.groups) {
-            if (fastify.environmentConfig["GroupRoleMapping"][group]) {
-              for (const role of fastify.environmentConfig["GroupRoleMapping"][
-                group
-              ]) {
+            const roles =
+              fastify.environmentConfig["GroupRoleMapping"][
+                group as KnownAzureGroupId
+              ];
+            if (roles) {
+              for (const role of roles) {
                 userRoles.add(role);
               }
             }
@@ -178,10 +179,10 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
             fastify.environmentConfig.AzureRoleMapping
           ) {
             for (const group of verifiedTokenData.roles) {
-              if (fastify.environmentConfig["AzureRoleMapping"][group]) {
-                for (const role of fastify.environmentConfig[
-                  "AzureRoleMapping"
-                ][group]) {
+              const roles =
+                fastify.environmentConfig["AzureRoleMapping"][group];
+              if (roles) {
+                for (const role of roles) {
                   userRoles.add(role);
                 }
               }
@@ -216,6 +217,7 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
           message: "Invalid token.",
         });
       }
+      request.userRoles = userRoles;
       return userRoles;
     },
   );

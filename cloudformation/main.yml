@@ -105,6 +105,35 @@ Resources:
             Path: /{proxy+}
             Method: ANY
 
+  AppApiLambdaFunctionVpc:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - AppLogGroups
+    Properties:
+      CodeUri: ../dist/src/
+      AutoPublishAlias: live
+      Runtime: nodejs20.x
+      Description: !Sub "${ApplicationFriendlyName} API Lambda - VPC attached"
+      FunctionName: !Sub ${ApplicationPrefix}-lambda-vpc
+      Handler: lambda.handler
+      MemorySize: 512
+      Role: !GetAtt AppSecurityRoles.Outputs.MainFunctionRoleArn
+      Timeout: 60
+      Environment:
+        Variables:
+          RunEnvironment: !Ref RunEnvironment
+      VpcConfig: 
+        Ipv6AllowedForDualStack: True
+        SecurityGroupIds: !FindInMap [EnvironmentToCidr, !Ref RunEnvironment, SecurityGroupIds]
+        SubnetIds: !FindInMap [EnvironmentToCidr, !Ref RunEnvironment, SubnetIds]
+      Events:
+        LinkryEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AppApiGateway
+            Path: /api/v1/linkry/{proxy+}
+            Method: ANY
+
   EventRecordsTable:
     Type: 'AWS::DynamoDB::Table'
     DeletionPolicy: "Retain"  

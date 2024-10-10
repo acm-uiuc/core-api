@@ -2,7 +2,7 @@
 import { randomUUID } from "crypto";
 import fastify, { FastifyInstance } from "fastify";
 import FastifyAuthProvider from "@fastify/auth";
-import fastifyAuthPlugin from "./plugins/auth.js";
+import fastifyAuthPlugin, { getSecretValue } from "./plugins/auth.js";
 import protectedRoute from "./routes/protected.js";
 import errorHandlerPlugin from "./plugins/errorHandler.js";
 import { RunEnvironment, runEnvironments } from "./roles.js";
@@ -10,11 +10,13 @@ import { InternalServerError } from "./errors/index.js";
 import eventsPlugin from "./routes/events.js";
 import cors from "@fastify/cors";
 import fastifyZodValidationPlugin from "./plugins/validate.js";
-import { environmentConfig } from "./config.js";
+import { environmentConfig, genericConfig } from "./config.js";
 import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
 import vendingPlugin from "./routes/vending.js";
+import linkryPlugin from "./routes/linkry.js";
 import * as dotenv from "dotenv";
+import { getSequelizeInstance } from "./functions/database.js";
 dotenv.config();
 
 const now = () => Date.now();
@@ -47,12 +49,19 @@ async function init() {
   }
   app.runEnvironment = process.env.RunEnvironment as RunEnvironment;
   app.environmentConfig = environmentConfig[app.runEnvironment];
-  app.addHook("onRequest", (req, _, done) => {
+  app.secretValue = null;
+  app.sequelizeInstance = null;
+  app.addHook("onRequest", async (req, _) => {
+    if (!app.secretValue) {
+      app.secretValue =
+        (await getSecretValue(genericConfig.ConfigSecretName)) || {};
+    }
+    // if (!app.sequelizeInstance) {
+    //   app.sequelizeInstance = await getSequelizeInstance(app);
+    // }
     req.startTime = now();
     req.log.info({ url: req.raw.url }, "received request");
-    done();
   });
-
   app.addHook("onResponse", (req, reply, done) => {
     req.log.info(
       {
@@ -71,6 +80,7 @@ async function init() {
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
+      api.register(linkryPlugin, { prefix: "/linkry" });
       if (app.runEnvironment === "dev") {
         api.register(vendingPlugin, { prefix: "/vending" });
       }

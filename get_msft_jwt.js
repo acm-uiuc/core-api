@@ -1,6 +1,6 @@
 import request from 'request';
 
-const client_secret = process.env.EVENTS_API_CLIENT_SECRET;
+const client_secret = process.env.AadClientSecret;
 if (!client_secret) {
     console.error("Did not find client secret in environment.");
     process.exit(1);

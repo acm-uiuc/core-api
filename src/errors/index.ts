@@ -68,6 +68,17 @@ export class InternalServerError extends BaseError<"InternalServerError"> {
   }
 }
 
+export class DatabaseDeleteError extends BaseError<"DatabaseDeleteError"> {
+  constructor({ message }: { message: string }) {
+    super({
+      name: "DatabaseDeleteError",
+      id: 107,
+      message,
+      httpStatusCode: 500,
+    });
+  }
+}
+
 export class NotFoundError extends BaseError<"NotFoundError"> {
   constructor({ endpointName }: { endpointName: string }) {
     super({

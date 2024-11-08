@@ -78,6 +78,13 @@ export async function getEntraIdToken(
  * @returns {Promise<boolean>} True if the invitation was successful
  */
 export async function addToTenant(token: string, email: string) {
+  email = email.toLowerCase().replace(/\s/g, "");
+  if (!email.endsWith("@illinois.edu")) {
+    throw new EntraInvitationError({
+      email,
+      message: "User's domain must be illinois.edu to be invited.",
+    });
+  }
   try {
     const body = {
       invitedUserEmailAddress: email,

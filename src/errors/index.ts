@@ -122,3 +122,16 @@ export class DiscordEventError extends BaseError<"DiscordEventError"> {
     });
   }
 }
+
+export class EntraInvitationError extends BaseError<"EntraInvitationError"> {
+  email: string;
+  constructor({ message, email }: { message?: string; email: string }) {
+    super({
+      name: "EntraInvitationError",
+      id: 108,
+      message: message || "Could not invite user to Entra ID.",
+      httpStatusCode: 500,
+    });
+    this.email = email;
+  }
+}

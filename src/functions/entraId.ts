@@ -1,9 +1,17 @@
 import { genericConfig } from "../config.js";
-import { InternalServerError } from "../errors/index.js";
+import { EntraInvitationError, InternalServerError } from "../errors/index.js";
 import { getSecretValue } from "../plugins/auth.js";
 import { ConfidentialClientApplication } from "@azure/msal-node";
 import { getItemFromCache, insertItemIntoCache } from "./cache.js";
 
+interface EntraInvitationResponse {
+  status: number;
+  data?: Record<string, string>;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
 export async function getEntraIdToken(
   clientId: string,
   scopes: string[] = ["https://graph.microsoft.com/.default"],
@@ -34,7 +42,6 @@ export async function getEntraIdToken(
         thumbprint: (secretApiConfig.entra_id_thumbprint as string) || "",
         privateKey: decodedPrivateKey,
       },
-      clientCapabilities: ["CP1"],
     },
   };
   const cca = new ConfidentialClientApplication(config);
@@ -60,6 +67,49 @@ export async function getEntraIdToken(
   } catch (error) {
     throw new InternalServerError({
       message: `Failed to acquire token: ${error}`,
+    });
+  }
+}
+
+/**
+ * Adds a user to the tenant by sending an invitation to their email
+ * @param email - The email address of the user to invite
+ * @throws {InternalServerError} If the invitation fails
+ * @returns {Promise<boolean>} True if the invitation was successful
+ */
+export async function addToTenant(token: string, email: string) {
+  try {
+    const body = {
+      invitedUserEmailAddress: email,
+      inviteRedirectUrl: "https://acm.illinois.edu",
+    };
+    const url = "https://graph.microsoft.com/v1.0/invitations";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = (await response.json()) as EntraInvitationResponse;
+      throw new EntraInvitationError({
+        message: errorData.error?.message || response.statusText,
+        email,
+      });
+    }
+
+    return { success: true, email };
+  } catch (error) {
+    if (error instanceof EntraInvitationError) {
+      throw error;
+    }
+
+    throw new EntraInvitationError({
+      message: error instanceof Error ? error.message : String(error),
+      email,
     });
   }
 }

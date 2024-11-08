@@ -48,6 +48,6 @@ test("Test happy path", async () => {
   const jsonBody = await response.json();
   expect(jsonBody).toEqual({
     username: "infra-unit-test@acm.illinois.edu",
-    roles: ["manage:events"],
+    roles: ["manage:events", "invite:sso"],
   });
 });

@@ -108,7 +108,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         if (userProvidedId) {
           const response = await dynamoClient.send(
             new GetItemCommand({
-              TableName: genericConfig.DynamoTableName,
+              TableName: genericConfig.EventsDynamoTableName,
               Key: { id: { S: userProvidedId } },
             }),
           );
@@ -130,7 +130,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         };
         await dynamoClient.send(
           new PutItemCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             Item: marshall(entry),
           }),
         );
@@ -143,14 +143,14 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           // restore original DB status if Discord fails.
           await dynamoClient.send(
             new DeleteItemCommand({
-              TableName: genericConfig.DynamoTableName,
+              TableName: genericConfig.EventsDynamoTableName,
               Key: { id: { S: entryUUID } },
             }),
           );
           if (userProvidedId) {
             await dynamoClient.send(
               new PutItemCommand({
-                TableName: genericConfig.DynamoTableName,
+                TableName: genericConfig.EventsDynamoTableName,
                 Item: originalEvent,
               }),
             );
@@ -194,7 +194,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         const response = await dynamoClient.send(
           new QueryCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             KeyConditionExpression: "#id = :id",
             ExpressionAttributeNames: {
               "#id": "id",
@@ -237,7 +237,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         await dynamoClient.send(
           new DeleteItemCommand({
-            TableName: genericConfig.DynamoTableName,
+            TableName: genericConfig.EventsDynamoTableName,
             Key: marshall({ id }),
           }),
         );
@@ -274,7 +274,7 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       const upcomingOnly = request.query?.upcomingOnly || false;
       try {
         const response = await dynamoClient.send(
-          new ScanCommand({ TableName: genericConfig.DynamoTableName }),
+          new ScanCommand({ TableName: genericConfig.EventsDynamoTableName }),
         );
         const items = response.Items?.map((item) => unmarshall(item));
         const currentTimeChicago = moment().tz("America/Chicago");

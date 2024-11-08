@@ -13,7 +13,7 @@ import {
   UnauthenticatedError,
   UnauthorizedError,
 } from "../errors/index.js";
-import { genericConfig } from "../config.js";
+import { genericConfig, SecretConfig } from "../config.js";
 
 function intersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
   const _intersection = new Set<T>();
@@ -57,7 +57,7 @@ const smClient = new SecretsManagerClient({
 
 export const getSecretValue = async (
   secretId: string,
-): Promise<Record<string, string | number | boolean> | null> => {
+): Promise<Record<string, string | number | boolean> | null | SecretConfig> => {
   const data = await smClient.send(
     new GetSecretValueCommand({ SecretId: secretId }),
   );

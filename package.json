@@ -54,6 +54,7 @@
     "@aws-sdk/client-dynamodb": "^3.624.0",
     "@aws-sdk/client-secrets-manager": "^3.624.0",
     "@aws-sdk/util-dynamodb": "^3.624.0",
+    "@azure/msal-node": "^2.16.0",
     "@fastify/auth": "^4.6.1",
     "@fastify/aws-lambda": "^4.1.0",
     "@fastify/cors": "^9.0.1",

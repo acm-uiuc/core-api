@@ -17,10 +17,12 @@ export type ConfigType = {
 };
 
 type GenericConfigType = {
-  DynamoTableName: string;
+  EventsDynamoTableName: string;
+  CacheDynamoTableName: string;
   ConfigSecretName: string;
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
+  EntraTenantId: string;
 };
 
 type EnvironmentConfigType = {
@@ -28,10 +30,12 @@ type EnvironmentConfigType = {
 };
 
 const genericConfig: GenericConfigType = {
-  DynamoTableName: "infra-core-api-events",
+  EventsDynamoTableName: "infra-core-api-events",
+  CacheDynamoTableName: "infra-core-api-cache",
   ConfigSecretName: "infra-core-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",
+  EntraTenantId: "c8d9148f-9a59-4db3-827d-42ea0c2b6e2e",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {
@@ -75,6 +79,8 @@ export type SecretConfig = {
   jwt_key?: string;
   discord_guild_id: string;
   discord_bot_token: string;
+  entra_id_private_key: string;
+  entra_id_thumbprint: string;
 };
 
 export { genericConfig, environmentConfig };

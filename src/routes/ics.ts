@@ -42,7 +42,7 @@ const icalPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.get("/:host?", async (request, reply) => {
     const host = (request.params as Record<string, string>).host;
     let queryParams: QueryCommandInput = {
-      TableName: genericConfig.DynamoTableName,
+      TableName: genericConfig.EventsDynamoTableName,
     };
     let response;
     if (host) {

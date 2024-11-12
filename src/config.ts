@@ -17,10 +17,12 @@ export type ConfigType = {
 };
 
 type GenericConfigType = {
-  DynamoTableName: string;
+  EventsDynamoTableName: string;
+  CacheDynamoTableName: string;
   ConfigSecretName: string;
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
+  EntraTenantId: string;
   MerchStorePurchasesTableName: string;
   TicketPurchasesTableName: string;
 };
@@ -30,10 +32,12 @@ type EnvironmentConfigType = {
 };
 
 const genericConfig: GenericConfigType = {
-  DynamoTableName: "infra-core-api-events",
+  EventsDynamoTableName: "infra-core-api-events",
+  CacheDynamoTableName: "infra-core-api-cache",
   ConfigSecretName: "infra-core-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",
+  EntraTenantId: "c8d9148f-9a59-4db3-827d-42ea0c2b6e2e",
   MerchStorePurchasesTableName: "infra-merchstore-purchase-history",
   TicketPurchasesTableName: "infra-events-tickets",
 } as const;
@@ -62,7 +66,10 @@ const environmentConfig: EnvironmentConfigType = {
     GroupRoleMapping: {
       "48591dbc-cdcb-4544-9f63-e6b92b067e33": allAppRoles, // Infra Chairs
       "ff49e948-4587-416b-8224-65147540d5fc": allAppRoles, // Officers
-      "ad81254b-4eeb-4c96-8191-3acdce9194b1": [AppRoles.EVENTS_MANAGER], // Exec
+      "ad81254b-4eeb-4c96-8191-3acdce9194b1": [
+        AppRoles.EVENTS_MANAGER,
+        AppRoles.SSO_INVITE_USER,
+      ], // Exec
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [
@@ -79,6 +86,8 @@ export type SecretConfig = {
   jwt_key?: string;
   discord_guild_id: string;
   discord_bot_token: string;
+  entra_id_private_key: string;
+  entra_id_thumbprint: string;
 };
 
 export { genericConfig, environmentConfig };

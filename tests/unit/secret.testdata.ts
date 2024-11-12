@@ -4,6 +4,8 @@ const secretObject = {
   jwt_key: "somethingreallysecret",
   discord_guild_id: "12345",
   discord_bot_token: "12345",
+  entra_id_private_key: "",
+  entra_id_thumbprint: "",
 } as SecretConfig & { jwt_key: string };
 
 const secretJson = JSON.stringify(secretObject);

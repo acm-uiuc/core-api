@@ -56,9 +56,9 @@ async function init() {
       app.secretValue =
         (await getSecretValue(genericConfig.ConfigSecretName)) || {};
     }
-    // if (!app.sequelizeInstance) {
-    //   app.sequelizeInstance = await getSequelizeInstance(app);
-    // }
+    if (!app.sequelizeInstance) {
+      app.sequelizeInstance = await getSequelizeInstance(app);
+    }
     req.startTime = now();
     req.log.info({ url: req.raw.url }, "received request");
   });

@@ -264,6 +264,7 @@ const linkryRoutes: FastifyPluginAsync = async (fastify, _options) => {
         throw new UnauthorizedError({ message: "Could not get user roles." });
       }
       try {
+        // TODO: optimize this to use a proper query in sequelize
         const isAdmin = request.userRoles.has(AppRoles.LINKS_ADMIN);
         let filteredLinks = await ShortLinkModel.findAll();
         if (!isAdmin) {

@@ -21,6 +21,8 @@ type GenericConfigType = {
   ConfigSecretName: string;
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
+  MerchStorePurchasesTableName: string;
+  TicketPurchasesTableName: string;
 };
 
 type EnvironmentConfigType = {
@@ -32,6 +34,8 @@ const genericConfig: GenericConfigType = {
   ConfigSecretName: "infra-core-api-config",
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",
+  MerchStorePurchasesTableName: "infra-merchstore-purchase-history",
+  TicketPurchasesTableName: "infra-events-tickets",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

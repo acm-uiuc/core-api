@@ -23,6 +23,8 @@ type GenericConfigType = {
   UpcomingEventThresholdSeconds: number;
   AwsRegion: string;
   EntraTenantId: string;
+  MerchStorePurchasesTableName: string;
+  TicketPurchasesTableName: string;
 };
 
 type EnvironmentConfigType = {
@@ -36,6 +38,8 @@ const genericConfig: GenericConfigType = {
   UpcomingEventThresholdSeconds: 1800, // 30 mins
   AwsRegion: process.env.AWS_REGION || "us-east-1",
   EntraTenantId: "c8d9148f-9a59-4db3-827d-42ea0c2b6e2e",
+  MerchStorePurchasesTableName: "infra-merchstore-purchase-history",
+  TicketPurchasesTableName: "infra-events-tickets",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

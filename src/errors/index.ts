@@ -133,5 +133,24 @@ export class EntraInvitationError extends BaseError<"EntraInvitationError"> {
       httpStatusCode: 500,
     });
     this.email = email;
+export class TicketNotFoundError extends BaseError<"TicketNotFoundError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "TicketNotFoundError",
+      id: 108,
+      message: message || "Could not find the ticket presented.",
+      httpStatusCode: 404,
+    });
+  }
+}
+
+export class TicketNotValidError extends BaseError<"TicketNotValidError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "TicketNotValidError",
+      id: 109,
+      message: message || "Ticket presented was found but is not valid.",
+      httpStatusCode: 400,
+    });
   }
 }

@@ -18,12 +18,12 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 const postMerchSchema = z.object({
   type: z.literal("merch"),
   email: z.string().email(),
-  stripe_pi: z.string().min(1),
+  stripePi: z.string().min(1),
 });
 
 const postTicketSchema = z.object({
   type: z.literal("ticket"),
-  ticket_id: z.string().min(1),
+  ticketId: z.string().min(1),
 });
 
 const purchaseSchema = z.object({
@@ -74,7 +74,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       }
       switch (request.body.type) {
         case "merch":
-          ticketId = request.body.stripe_pi;
+          ticketId = request.body.stripePi;
           command = new UpdateItemCommand({
             TableName: genericConfig.MerchStorePurchasesTableName,
             Key: {
@@ -93,7 +93,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
           break;
         case "ticket":
-          ticketId = request.body.ticket_id;
+          ticketId = request.body.ticketId;
           command = new UpdateItemCommand({
             TableName: genericConfig.TicketPurchasesTableName,
             Key: {
@@ -172,7 +172,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       };
       switch (request.body.type) {
         case "merch":
-          ticketId = request.body.stripe_pi;
+          ticketId = request.body.stripePi;
           command = new UpdateItemCommand({
             TableName: genericConfig.MerchStorePurchasesTableName,
             Key: {
@@ -187,7 +187,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
           break;
         case "ticket":
-          ticketId = request.body.ticket_id;
+          ticketId = request.body.ticketId;
           command = new UpdateItemCommand({
             TableName: genericConfig.TicketPurchasesTableName,
             Key: {

@@ -7,6 +7,7 @@ import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
 import { secretJson, secretObject, jwtPayload } from "./secret.testdata.js";
 import jwt from "jsonwebtoken";
+import { allAppRoles } from "../../src/roles.js";
 
 const ddbMock = mockClient(SecretsManagerClient);
 
@@ -48,6 +49,6 @@ test("Test happy path", async () => {
   const jsonBody = await response.json();
   expect(jsonBody).toEqual({
     username: "infra-unit-test@acm.illinois.edu",
-    roles: ["manage:events"],
+    roles: allAppRoles,
   });
 });

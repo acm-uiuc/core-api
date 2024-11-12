@@ -81,9 +81,9 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
               stripe_pi: { S: ticketId },
             },
             UpdateExpression: "SET fulfilled = :true_val",
-            ConditionExpression: "#email = :email_val", // Added # to reference the attribute name
+            ConditionExpression: "#email = :email_val",
             ExpressionAttributeNames: {
-              "#email": "email", // Define the attribute name
+              "#email": "email",
             },
             ExpressionAttributeValues: {
               ":true_val": { BOOL: true },
@@ -126,7 +126,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             message: "Ticket was already refunded.",
           });
         }
-        if (attributes["used"]) {
+        if (attributes["used"] || attributes["fulfilled"]) {
           throw new TicketNotValidError({
             message: "Ticket has already been used.",
           });
@@ -182,6 +182,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             ConditionExpression: "email = :email_val",
             ExpressionAttributeValues: {
               ":scanner_email": { S: request.username },
+              ":email_val": { S: request.body.email },
             },
           });
           break;

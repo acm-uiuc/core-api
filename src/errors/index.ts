@@ -133,6 +133,9 @@ export class EntraInvitationError extends BaseError<"EntraInvitationError"> {
       httpStatusCode: 500,
     });
     this.email = email;
+  }
+}
+
 export class TicketNotFoundError extends BaseError<"TicketNotFoundError"> {
   constructor({ message }: { message?: string }) {
     super({

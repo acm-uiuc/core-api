@@ -1,4 +1,4 @@
-import { afterAll, expect, test, beforeEach, vi, Mock } from "vitest";
+import { afterAll, expect, test, beforeEach, vi } from "vitest";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
 import { createJwt } from "./auth.test.js";

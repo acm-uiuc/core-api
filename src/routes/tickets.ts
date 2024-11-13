@@ -268,14 +268,17 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Key: {
               stripe_pi: { S: ticketId },
             },
-            UpdateExpression: "SET scannerEmail = :scanner_email",
+            UpdateExpression:
+              "SET scannerEmail = :scanner_email, scanISOTimestamp = :scan_time",
             ConditionExpression: "email = :email_val",
             ExpressionAttributeValues: {
               ":scanner_email": { S: request.username },
+              ":scan_time": { S: new Date().toISOString() },
               ":email_val": { S: request.body.email },
             },
           });
           break;
+
         case "ticket":
           ticketId = request.body.ticketId;
           command = new UpdateItemCommand({
@@ -283,12 +286,15 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             Key: {
               ticket_id: { S: ticketId },
             },
-            UpdateExpression: "SET scannerEmail = :scanner_email",
+            UpdateExpression:
+              "SET scannerEmail = :scanner_email, scanISOTimestamp = :scan_time",
             ExpressionAttributeValues: {
               ":scanner_email": { S: request.username },
+              ":scan_time": { S: new Date().toISOString() },
             },
           });
           break;
+
         default:
           throw new ValidationError({
             message: `Unknown verification type!`,

@@ -48,13 +48,19 @@ const ticketEntryZod = z.object({
   purchaserData: purchaseSchema,
 });
 
+const ticketInfoEntryZod = ticketEntryZod.extend({
+  refunded: z.boolean(),
+  fulfilled: z.boolean(),
+});
+
 type TicketEntry = z.infer<typeof ticketEntryZod>;
+type TicketInfoEntry = z.infer<typeof ticketInfoEntryZod>;
 
 const responseJsonSchema = zodToJsonSchema(ticketEntryZod);
 
 const getTicketsResponseJsonSchema = zodToJsonSchema(
   z.object({
-    tickets: z.array(ticketEntryZod),
+    tickets: z.array(ticketInfoEntryZod),
   }),
 );
 
@@ -97,7 +103,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     async (request, reply) => {
       const eventId = (request.params as Record<string, string>).eventId;
       const eventType = request.query?.type;
-      const issuedTickets: TicketEntry[] = [];
+      const issuedTickets: TicketInfoEntry[] = [];
       switch (eventType) {
         case "merch":
           const command = new QueryCommand({
@@ -120,6 +126,8 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
               type: "merch",
               valid: true,
               ticketId: unmarshalled["stripe_pi"],
+              refunded: unmarshalled["refunded"],
+              fulfilled: unmarshalled["fulfilled"],
               purchaserData: {
                 email: unmarshalled["email"],
                 productId: eventId,

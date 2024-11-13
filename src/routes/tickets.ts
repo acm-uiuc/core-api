@@ -78,9 +78,8 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     {
       schema: {
         querystring: {
-          type: "object", // Add this to specify it's an object schema
+          type: "object",
           properties: {
-            // Add this to define the properties
             type: {
               type: "string",
               enum: ["merch", "ticket"],

@@ -265,7 +265,10 @@ const eventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     {
       schema: {
         querystring: {
-          upcomingOnly: { type: "boolean" },
+          type: "object",
+          properties: {
+            upcomingOnly: { type: "boolean" },
+          },
         },
         response: { 200: getEventsSchema },
       },

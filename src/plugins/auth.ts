@@ -186,10 +186,6 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
                 }
               }
             }
-          } else {
-            throw new UnauthenticatedError({
-              message: "Could not find groups or roles in token.",
-            });
           }
         }
         // add user-specific role overrides

@@ -77,6 +77,7 @@ const environmentConfig: EnvironmentConfigType = {
       ], // Exec
     },
     UserRoleMapping: {
+      "jlevine4@illinois.edu": allAppRoles,
       "kaavyam2@illinois.edu": [AppRoles.TICKETS_SCANNER],
       "cnwos@illinois.edu": [AppRoles.TICKETS_SCANNER],
       "alfan2@illinois.edu": [AppRoles.TICKETS_SCANNER],

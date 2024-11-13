@@ -78,6 +78,10 @@ const environmentConfig: EnvironmentConfigType = {
     },
     UserRoleMapping: {
       "kaavyam2@illinois.edu": [AppRoles.TICKET_SCANNER],
+      "cnwos@illinois.edu": [AppRoles.TICKET_SCANNER],
+      "alfan2@illinois.edu": [AppRoles.TICKET_SCANNER],
+      "naomil4@illinois.edu": [AppRoles.TICKET_SCANNER],
+      "akori3@illinois.edu": [AppRoles.TICKET_SCANNER],
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [

@@ -8,10 +8,12 @@ type ValueOrArray<T> = T | ArrayOfValueOrArray<T>;
 
 type GroupRoleMapping = Record<string, readonly AppRoles[]>;
 type AzureRoleMapping = Record<string, readonly AppRoles[]>;
+type UserRoleMapping = Record<string, readonly AppRoles[]>;
 
 export type ConfigType = {
   GroupRoleMapping: GroupRoleMapping;
   AzureRoleMapping: AzureRoleMapping;
+  UserRoleMapping: UserRoleMapping;
   ValidCorsOrigins: ValueOrArray<OriginType> | OriginFunction;
   AadValidClientId: string;
 };
@@ -51,6 +53,9 @@ const environmentConfig: EnvironmentConfigType = {
       "0": allAppRoles, // Dummy Group for development only
       "1": [], // Dummy Group for development only
     },
+    UserRoleMapping: {
+      "infra-unit-test-nogrp@acm.illinois.edu": [AppRoles.TICKET_SCANNER],
+    },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [
       "http://localhost:3000",
@@ -70,6 +75,9 @@ const environmentConfig: EnvironmentConfigType = {
         AppRoles.EVENTS_MANAGER,
         AppRoles.SSO_INVITE_USER,
       ], // Exec
+    },
+    UserRoleMapping: {
+      "kaavyam2@illinois.edu": [AppRoles.TICKET_SCANNER],
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [

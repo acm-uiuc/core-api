@@ -192,6 +192,16 @@ const authPlugin: FastifyPluginAsync = async (fastify, _options) => {
             });
           }
         }
+        // add user-specific role overrides
+        if (request.username && fastify.environmentConfig.UserRoleMapping) {
+          if (fastify.environmentConfig["UserRoleMapping"][request.username]) {
+            for (const role of fastify.environmentConfig["UserRoleMapping"][
+              request.username
+            ]) {
+              userRoles.add(role);
+            }
+          }
+        }
         if (
           expectedRoles.size > 0 &&
           intersection(userRoles, expectedRoles).size === 0

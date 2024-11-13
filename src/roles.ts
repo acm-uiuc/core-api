@@ -4,7 +4,8 @@ export type RunEnvironment = (typeof runEnvironments)[number];
 export enum AppRoles {
   EVENTS_MANAGER = "manage:events",
   SSO_INVITE_USER = "invite:sso",
-  TICKET_SCANNER = "scan:tickets",
+  TICKETS_SCANNER = "scan:tickets",
+  TICKETS_MANAGER = "manage:tickets",
 }
 export const allAppRoles = Object.values(AppRoles).filter(
   (value) => typeof value === "string",

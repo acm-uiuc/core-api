@@ -10,7 +10,7 @@ const fulfilledMerchItem1 = {
     BOOL: true,
   },
   item_id: {
-    S: "sigpwny_fallctf_2022_shirt",
+    S: "2024_fa_barcrawl",
   },
   quantity: {
     N: "1",

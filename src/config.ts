@@ -54,7 +54,7 @@ const environmentConfig: EnvironmentConfigType = {
       "1": [], // Dummy Group for development only
     },
     UserRoleMapping: {
-      "infra-unit-test-nogrp@acm.illinois.edu": [AppRoles.TICKET_SCANNER],
+      "infra-unit-test-nogrp@acm.illinois.edu": [AppRoles.TICKETS_SCANNER],
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [
@@ -77,11 +77,17 @@ const environmentConfig: EnvironmentConfigType = {
       ], // Exec
     },
     UserRoleMapping: {
-      "kaavyam2@illinois.edu": [AppRoles.TICKET_SCANNER],
-      "cnwos@illinois.edu": [AppRoles.TICKET_SCANNER],
-      "alfan2@illinois.edu": [AppRoles.TICKET_SCANNER],
-      "naomil4@illinois.edu": [AppRoles.TICKET_SCANNER],
-      "akori3@illinois.edu": [AppRoles.TICKET_SCANNER],
+      "kaavyam2@illinois.edu": [AppRoles.TICKETS_SCANNER],
+      "cnwos@illinois.edu": [AppRoles.TICKETS_SCANNER],
+      "alfan2@illinois.edu": [AppRoles.TICKETS_SCANNER],
+      "naomil4@illinois.edu": [
+        AppRoles.TICKETS_SCANNER,
+        AppRoles.TICKETS_MANAGER,
+      ],
+      "akori3@illinois.edu": [
+        AppRoles.TICKETS_SCANNER,
+        AppRoles.TICKETS_MANAGER,
+      ],
     },
     AzureRoleMapping: { AutonomousWriters: [AppRoles.EVENTS_MANAGER] },
     ValidCorsOrigins: [

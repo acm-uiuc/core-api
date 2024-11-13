@@ -1,10 +1,14 @@
 import { afterAll, expect, test, beforeEach, vi, describe } from "vitest";
-import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  QueryCommand,
+  UpdateItemCommand,
+} from "@aws-sdk/client-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
 import init from "../../src/index.js";
-import { EventGetResponse } from "../../src/routes/events.js";
 import { secretObject } from "./secret.testdata.js";
 import {
+  dynamoTableData,
   fulfilledMerchItem1,
   refundedMerchItem,
   unfulfilledMerchItem1,
@@ -39,7 +43,7 @@ describe("Test ticket purchase verification", async () => {
         ticketId:
           "9d98e1e3c2138c93dd5a284239eddfa9c3037a0862972cd0f51ee1b54257a37e",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(200);
     expect(responseDataJson).toEqual({
       valid: true,
@@ -69,7 +73,7 @@ describe("Test ticket purchase verification", async () => {
         ticketId:
           "9d98e1e3c2138c93dd5a284239eddfa9c3037a0862972cd0f51ee1b54257a37e",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(200);
     expect(responseDataJson).toEqual({
       valid: true,
@@ -99,7 +103,7 @@ describe("Test ticket purchase verification", async () => {
         email: "testing2@illinois.edu",
         stripePi: "pi_6T9QvUwR2IOj4CyF35DsXK7P",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(400);
     expect(responseDataJson).toEqual({
       error: true,
@@ -125,7 +129,7 @@ describe("Test ticket purchase verification", async () => {
         ticketId:
           "975b4470cf37d7cf20fd404a711513fd1d1e68259ded27f10727d1384961843d",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(400);
     expect(responseDataJson).toEqual({
       error: true,
@@ -153,7 +157,7 @@ describe("Test merch purchase verification", async () => {
         email: "testing1@illinois.edu",
         stripePi: "pi_8J4NrYdA3S7cW8Ty92FnGJ6L",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(200);
     expect(responseDataJson).toEqual({
       valid: true,
@@ -183,7 +187,7 @@ describe("Test merch purchase verification", async () => {
         ticketId:
           "975b4470cf37d7cf20fd404a711513fd1d1e68259ded27f10727d1384961843d",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(400);
     expect(responseDataJson).toEqual({
       error: true,
@@ -208,7 +212,7 @@ describe("Test merch purchase verification", async () => {
         email: "testing2@illinois.edu",
         stripePi: "pi_6T9QvUwR2IOj4CyF35DsXK7P",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(400);
     expect(responseDataJson).toEqual({
       error: true,
@@ -233,7 +237,7 @@ describe("Test merch purchase verification", async () => {
         email: "testing0@illinois.edu",
         stripePi: "pi_3Q5GewDiGOXU9RuS16txRR5D",
       });
-    const responseDataJson = response.body as EventGetResponse;
+    const responseDataJson = response.body;
     expect(response.statusCode).toEqual(400);
     expect(responseDataJson).toEqual({
       error: true,
@@ -241,6 +245,36 @@ describe("Test merch purchase verification", async () => {
       message: "Ticket has already been used.",
       name: "TicketNotValidError",
     });
+  });
+});
+
+describe("Test getting all issued tickets", async () => {
+  test("Happy path: get all tickets", async () => {
+    ddbMock
+      .on(QueryCommand)
+      .resolvesOnce({ Items: dynamoTableData })
+      .resolvesOnce({});
+
+    const testJwt = createJwt();
+    await app.ready();
+    const response = await supertest(app.server)
+      .get("/api/v1/tickets/2024_fa_barcrawl?type=merch")
+      .set("authorization", `Bearer ${testJwt}`);
+    const responseDataJson = response.body;
+    expect(response.statusCode).toEqual(200);
+    expect(responseDataJson.tickets).toHaveLength(4);
+  });
+  test("Sad path: fail on type 'ticket'", async () => {
+    ddbMock.on(QueryCommand).rejects();
+
+    const testJwt = createJwt();
+    await app.ready();
+    const response = await supertest(app.server)
+      .get("/api/v1/tickets/2024_fa_barcrawl?type=ticket")
+      .set("authorization", `Bearer ${testJwt}`);
+    const responseDataJson = response.body;
+    expect(response.statusCode).toEqual(400);
+    expect(responseDataJson.id).toEqual(110);
   });
 });
 

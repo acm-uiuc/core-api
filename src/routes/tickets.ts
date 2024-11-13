@@ -1,10 +1,16 @@
 import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  QueryCommand,
+  UpdateItemCommand,
+} from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
 import {
   BaseError,
   DatabaseFetchError,
+  NotFoundError,
+  NotSupportedError,
   TicketNotFoundError,
   TicketNotValidError,
   UnauthenticatedError,
@@ -35,12 +41,20 @@ const purchaseSchema = z.object({
 
 type PurchaseData = z.infer<typeof purchaseSchema>;
 
-const responseJsonSchema = zodToJsonSchema(
+const ticketEntryZod = z.object({
+  valid: z.boolean(),
+  type: z.enum(["merch", "ticket"]),
+  ticketId: z.string().min(1),
+  purchaserData: purchaseSchema,
+});
+
+type TicketEntry = z.infer<typeof ticketEntryZod>;
+
+const responseJsonSchema = zodToJsonSchema(ticketEntryZod);
+
+const getTicketsResponseJsonSchema = zodToJsonSchema(
   z.object({
-    valid: z.boolean(),
-    type: z.enum(["merch", "ticket"]),
-    ticketId: z.string().min(1),
-    purchaserData: purchaseSchema,
+    tickets: z.array(ticketEntryZod),
   }),
 );
 
@@ -52,7 +66,79 @@ const dynamoClient = new DynamoDBClient({
   region: genericConfig.AwsRegion,
 });
 
+type TicketsGetRequest = {
+  Params: { id: string };
+  Querystring: { type: string };
+  Body: undefined;
+};
+
 const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
+  fastify.get<TicketsGetRequest>(
+    "/:eventId",
+    {
+      schema: {
+        querystring: {
+          type: "object", // Add this to specify it's an object schema
+          properties: {
+            // Add this to define the properties
+            type: {
+              type: "string",
+              enum: ["merch", "ticket"],
+            },
+          },
+        },
+        response: {
+          200: getTicketsResponseJsonSchema,
+        },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.TICKETS_MANAGER]);
+      },
+    },
+    async (request, reply) => {
+      const eventId = (request.params as Record<string, string>).eventId;
+      const eventType = request.query?.type;
+      const issuedTickets: TicketEntry[] = [];
+      switch (eventType) {
+        case "merch":
+          const command = new QueryCommand({
+            TableName: genericConfig.MerchStorePurchasesTableName,
+            IndexName: "ItemIdIndexAll",
+            KeyConditionExpression: "item_id = :itemId",
+            ExpressionAttributeValues: {
+              ":itemId": { S: eventId },
+            },
+          });
+          const response = await dynamoClient.send(command);
+          if (!response.Items) {
+            throw new NotFoundError({
+              endpointName: `/api/v1/tickets/${eventId}`,
+            });
+          }
+          for (const item of response.Items) {
+            const unmarshalled = unmarshall(item);
+            issuedTickets.push({
+              type: "merch",
+              valid: true,
+              ticketId: unmarshalled["stripe_pi"],
+              purchaserData: {
+                email: unmarshalled["email"],
+                productId: eventId,
+                quantity: unmarshalled["quantity"],
+                size: unmarshalled["size"],
+              },
+            });
+          }
+          break;
+        default:
+          throw new NotSupportedError({
+            message: `Retrieving tickets currently only supported on type "merch"!`,
+          });
+      }
+      const response = { tickets: issuedTickets };
+      return reply.send(response);
+    },
+  );
   fastify.post<{ Body: VerifyPostRequest }>(
     "/checkIn",
     {
@@ -63,14 +149,16 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         await fastify.zodValidateBody(request, reply, postSchema);
       },
       onRequest: async (request, reply) => {
-        await fastify.authorize(request, reply, [AppRoles.TICKET_SCANNER]);
+        await fastify.authorize(request, reply, [AppRoles.TICKETS_SCANNER]);
       },
     },
     async (request, reply) => {
       let command: UpdateItemCommand;
       let ticketId: string;
       if (!request.username) {
-        throw new UnauthenticatedError({ message: "Could not find username." });
+        throw new UnauthenticatedError({
+          message: "Could not find username.",
+        });
       }
       switch (request.body.type) {
         case "merch":
@@ -110,7 +198,9 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
           break;
         default:
-          throw new ValidationError({ message: `Unknown verification type!` });
+          throw new ValidationError({
+            message: `Unknown verification type!`,
+          });
       }
       let purchaserData: PurchaseData;
       try {
@@ -200,7 +290,9 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
           break;
         default:
-          throw new ValidationError({ message: `Unknown verification type!` });
+          throw new ValidationError({
+            message: `Unknown verification type!`,
+          });
       }
       await dynamoClient.send(command);
       reply.send(response);

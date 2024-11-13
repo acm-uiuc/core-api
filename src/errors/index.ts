@@ -157,3 +157,14 @@ export class TicketNotValidError extends BaseError<"TicketNotValidError"> {
     });
   }
 }
+
+export class NotSupportedError extends BaseError<"NotSupportedError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "NotSupportedError",
+      id: 110,
+      message: message || "This operation is not supported.",
+      httpStatusCode: 400,
+    });
+  }
+}

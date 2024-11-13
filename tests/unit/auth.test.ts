@@ -80,6 +80,6 @@ test("Test user-specific role grants", async () => {
   const jsonBody = await response.json();
   expect(jsonBody).toEqual({
     username: "infra-unit-test-nogrp@acm.illinois.edu",
-    roles: [AppRoles.TICKET_SCANNER],
+    roles: [AppRoles.TICKETS_SCANNER],
   });
 });

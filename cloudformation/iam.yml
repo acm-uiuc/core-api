@@ -63,6 +63,12 @@ Resources:
               Resource:
                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events/*
                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-events
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-cache
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-core-api-cache/*
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-merchstore-purchase-history/*
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-merchstore-purchase-history
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-tickets
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/infra-events-tickets/*
         PolicyName: lambda-dynamo
 Outputs:
   MainFunctionRoleArn:

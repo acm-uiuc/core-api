@@ -54,7 +54,6 @@ const ticketInfoEntryZod = ticketEntryZod.extend({
   fulfilled: z.boolean(),
 });
 
-type TicketEntry = z.infer<typeof ticketEntryZod>;
 type TicketInfoEntry = z.infer<typeof ticketInfoEntryZod>;
 
 const responseJsonSchema = zodToJsonSchema(ticketEntryZod);

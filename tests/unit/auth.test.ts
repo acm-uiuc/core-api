@@ -19,19 +19,23 @@ const ddbMock = mockClient(SecretsManagerClient);
 const app = await init();
 const jwt_secret = secretObject["jwt_key"];
 export function createJwt(date?: Date, group?: string) {
-  let modifiedPayload = jwtPayload;
+  let modifiedPayload = {
+    ...jwtPayload,
+    groups: [...jwtPayload.groups],
+  };
   if (date) {
     const nowMs = Math.floor(date.valueOf() / 1000);
     const laterMs = nowMs + 3600 * 24;
     modifiedPayload = {
-      ...jwtPayload,
+      ...modifiedPayload,
       iat: nowMs,
       nbf: nowMs,
       exp: laterMs,
     };
   }
+
   if (group) {
-    modifiedPayload["groups"][0] = group;
+    modifiedPayload.groups[0] = group;
   }
   return jwt.sign(modifiedPayload, jwt_secret, { algorithm: "HS256" });
 }

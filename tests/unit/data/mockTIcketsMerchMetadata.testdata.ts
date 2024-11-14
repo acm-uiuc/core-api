@@ -66,7 +66,7 @@ const merchMetadata = [
   },
   {
     item_id: {
-      S: "2024_fa_barcrawl",
+      S: "2024_fa_barcrawl_2",
     },
     item_email_desc: {
       S: "Shirts will be availiable for pickup one week before the event. Check your email near then for more details. Make sure to join the ACM Discord for updates!",
@@ -88,7 +88,7 @@ const merchMetadata = [
       },
     },
     item_sales_active_utc: {
-      N: "0",
+      N: "-1",
     },
     member_price: {
       S: "price_1QFSCiDiGOXU9RuSNJ90SblG",

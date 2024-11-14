@@ -126,21 +126,32 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       },
     },
     async (request, reply) => {
+      let isTicketingManager = true;
+      try {
+        await fastify.authorize(request, reply, [AppRoles.TICKETS_MANAGER]);
+      } catch {
+        isTicketingManager = false;
+      }
+
       const merchCommand = new ScanCommand({
         TableName: genericConfig.MerchStoreMetadataTableName,
         ProjectionExpression:
           "item_id, item_name, item_sales_active_utc, item_price",
       });
-      const isTicketingManager = await fastify.authorize(request, reply, [
-        AppRoles.TICKETS_MANAGER,
-      ]);
+
       const merchItems: ItemMetadata[] = [];
       const response = await dynamoClient.send(merchCommand);
+      const now = new Date();
+
       if (response.Items) {
         for (const item of response.Items.map((x) => unmarshall(x))) {
-          if (!isTicketingManager && item.item_sales_active_utc === -1) {
-            continue;
+          // Skip inactive items for non-managers
+          if (!isTicketingManager) {
+            if (item.item_sales_active_utc === -1) continue;
+            const itemDate = new Date(parseInt(item.item_sales_active_utc, 10));
+            if (itemDate > now) continue;
           }
+
           const memberPrice = parseInt(item.item_price?.paid, 10) || 0;
           const nonMemberPrice = parseInt(item.item_price?.others, 10) || 0;
           merchItems.push({
@@ -157,18 +168,27 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
         }
       }
+
       const ticketCommand = new ScanCommand({
         TableName: genericConfig.TicketMetadataTableName,
         ProjectionExpression:
           "event_id, event_name, event_sales_active_utc, event_capacity, tickets_sold, eventCost",
       });
+
       const ticketItems: TicketItemMetadata[] = [];
       const ticketResponse = await dynamoClient.send(ticketCommand);
+
       if (ticketResponse.Items) {
         for (const item of ticketResponse.Items.map((x) => unmarshall(x))) {
-          if (!isTicketingManager && item.event_sales_active_utc === -1) {
-            continue;
+          // Skip inactive items for non-managers
+          if (!isTicketingManager) {
+            if (item.event_sales_active_utc === -1) continue;
+            const itemDate = new Date(
+              parseInt(item.event_sales_active_utc, 10),
+            );
+            if (itemDate > now) continue;
           }
+
           const memberPrice = parseInt(item.eventCost?.paid, 10) || 0;
           const nonMemberPrice = parseInt(item.eventCost?.others, 10) || 0;
           ticketItems.push({
@@ -187,6 +207,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           });
         }
       }
+
       reply.send({ merch: merchItems, tickets: ticketItems });
     },
   );

@@ -56,6 +56,7 @@ const environmentConfig: EnvironmentConfigType = {
       "f8dfc4cf-456b-4da3-9053-f7fdeda5d5d6": allAppRoles, // Infra Leads
       "0": allAppRoles, // Dummy Group for development only
       "1": [], // Dummy Group for development only
+      "scanner-only": [AppRoles.TICKETS_SCANNER],
     },
     UserRoleMapping: {
       "infra-unit-test-nogrp@acm.illinois.edu": [AppRoles.TICKETS_SCANNER],

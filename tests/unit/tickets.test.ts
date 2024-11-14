@@ -59,9 +59,9 @@ describe("Test getting ticketing + merch metadata", async () => {
           priceDollars: { member: 22, nonMember: 26 },
         },
         {
-          itemId: "2024_fa_barcrawl",
+          itemId: "2024_fa_barcrawl_2",
           itemName: "ACM Bar Crawl: Fall 2024 (Nov 14)",
-          itemSalesActive: "1970-01-01T00:00:00.000Z",
+          itemSalesActive: false,
           priceDollars: { member: 15, nonMember: 18 },
         },
       ],
@@ -84,7 +84,36 @@ describe("Test getting ticketing + merch metadata", async () => {
         },
       ],
     });
-    expect(responseDataJson.tickets).toHaveLength(2);
+  });
+  test("Ensure scanners can only see active items", async () => {
+    ddbMock
+      .on(ScanCommand)
+      .resolvesOnce({
+        Items: merchMetadata as Record<string, AttributeValue>[],
+      })
+      .resolvesOnce({
+        Items: ticketsMetadata as Record<string, AttributeValue>[],
+      })
+      .rejects();
+    const testJwt = createJwt(undefined, "scanner-only");
+    await app.ready();
+    const response = await supertest(app.server)
+      .get("/api/v1/tickets")
+      .set("authorization", `Bearer ${testJwt}`);
+    const responseDataJson = response.body;
+    console.log(responseDataJson);
+    expect(response.statusCode).toEqual(200);
+    expect(responseDataJson).toEqual({
+      merch: [
+        {
+          itemId: "2024_spr_tshirt",
+          itemName: "ACM T-Shirt: Spring 2024 Series",
+          itemSalesActive: "1970-01-01T00:00:00.000Z",
+          priceDollars: { member: 22, nonMember: 26 },
+        },
+      ],
+      tickets: [],
+    });
   });
 });
 

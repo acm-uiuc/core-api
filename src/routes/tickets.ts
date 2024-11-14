@@ -131,10 +131,16 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         ProjectionExpression:
           "item_id, item_name, item_sales_active_utc, item_price",
       });
+      const isTicketingManager = await fastify.authorize(request, reply, [
+        AppRoles.TICKETS_MANAGER,
+      ]);
       const merchItems: ItemMetadata[] = [];
       const response = await dynamoClient.send(merchCommand);
       if (response.Items) {
         for (const item of response.Items.map((x) => unmarshall(x))) {
+          if (!isTicketingManager && item.item_sales_active_utc === -1) {
+            continue;
+          }
           const memberPrice = parseInt(item.item_price?.paid, 10) || 0;
           const nonMemberPrice = parseInt(item.item_price?.others, 10) || 0;
           merchItems.push({
@@ -160,6 +166,9 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       const ticketResponse = await dynamoClient.send(ticketCommand);
       if (ticketResponse.Items) {
         for (const item of ticketResponse.Items.map((x) => unmarshall(x))) {
+          if (!isTicketingManager && item.event_sales_active_utc === -1) {
+            continue;
+          }
           const memberPrice = parseInt(item.eventCost?.paid, 10) || 0;
           const nonMemberPrice = parseInt(item.eventCost?.others, 10) || 0;
           ticketItems.push({

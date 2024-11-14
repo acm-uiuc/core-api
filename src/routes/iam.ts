@@ -3,12 +3,33 @@ import { AppRoles } from "../roles.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { addToTenant, getEntraIdToken } from "../functions/entraId.js";
-import { EntraInvitationError, InternalServerError } from "../errors/index.js";
+import {
+  BaseError,
+  DatabaseInsertError,
+  EntraInvitationError,
+  InternalServerError,
+} from "../errors/index.js";
+import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { genericConfig } from "../config.js";
+import { marshall } from "@aws-sdk/util-dynamodb";
 
 const invitePostRequestSchema = z.object({
   emails: z.array(z.string()),
 });
 export type InviteUserPostRequest = z.infer<typeof invitePostRequestSchema>;
+
+const groupMappingCreatePostSchema = z.object({
+  roles: z
+    .array(z.nativeEnum(AppRoles))
+    .min(1)
+    .refine((items) => new Set(items).size === items.length, {
+      message: "All roles must be unique, no duplicate values allowed",
+    }),
+});
+
+export type GroupMappingCreatePostRequest = z.infer<
+  typeof groupMappingCreatePostSchema
+>;
 
 const invitePostResponseSchema = zodToJsonSchema(
   z.object({
@@ -19,7 +40,63 @@ const invitePostResponseSchema = zodToJsonSchema(
   }),
 );
 
-const ssoManagementRoute: FastifyPluginAsync = async (fastify, _options) => {
+const dynamoClient = new DynamoDBClient({
+  region: genericConfig.AwsRegion,
+});
+
+const iamRoutes: FastifyPluginAsync = async (fastify, _options) => {
+  fastify.post<{
+    Body: GroupMappingCreatePostRequest;
+    Querystring: { groupId: string };
+  }>(
+    "/groupRoles/:groupId",
+    {
+      schema: {
+        querystring: {
+          type: "object",
+          properties: {
+            groupId: {
+              type: "string",
+            },
+          },
+        },
+      },
+      preValidation: async (request, reply) => {
+        await fastify.zodValidateBody(
+          request,
+          reply,
+          groupMappingCreatePostSchema,
+        );
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.IAM_ADMIN]);
+      },
+    },
+    async (request, reply) => {
+      const groupId = (request.params as Record<string, string>).groupId;
+      try {
+        const command = new PutItemCommand({
+          TableName: `${genericConfig.IAMTablePrefix}-grouproles`,
+          Item: marshall({
+            groupUuid: groupId,
+            roles: request.body.roles,
+          }),
+        });
+
+        await dynamoClient.send(command);
+      } catch (e: unknown) {
+        if (e instanceof BaseError) {
+          throw e;
+        }
+
+        request.log.error(e);
+        throw new DatabaseInsertError({
+          message: "Could not create group role mapping.",
+        });
+      }
+      reply.send({ message: "OK" });
+    },
+  );
   fastify.post<{ Body: InviteUserPostRequest }>(
     "/inviteUsers",
     {
@@ -72,4 +149,4 @@ const ssoManagementRoute: FastifyPluginAsync = async (fastify, _options) => {
   );
 };
 
-export default ssoManagementRoute;
+export default iamRoutes;

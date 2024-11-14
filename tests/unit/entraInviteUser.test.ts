@@ -16,7 +16,7 @@ vi.mock("../../src/functions/entraId.js", () => {
     getEntraIdToken: vi.fn().mockImplementation(async () => {
       return "ey.test.token";
     }),
-    addToTenant: vi.fn().mockImplementation(async (email) => {
+    addToTenant: vi.fn().mockImplementation(async (_) => {
       return { success: true, email: "testing@illinois.edu" };
     }),
   };

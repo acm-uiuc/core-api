@@ -15,7 +15,7 @@ import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
 import vendingPlugin from "./routes/vending.js";
 import * as dotenv from "dotenv";
-import ssoManagementRoute from "./routes/sso.js";
+import iamRoutes from "./routes/iam.js";
 import ticketsPlugin from "./routes/tickets.js";
 dotenv.config();
 
@@ -73,7 +73,7 @@ async function init() {
       api.register(eventsPlugin, { prefix: "/events" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
-      api.register(ssoManagementRoute, { prefix: "/sso" });
+      api.register(iamRoutes, { prefix: "/iam" });
       api.register(ticketsPlugin, { prefix: "/tickets" });
       if (app.runEnvironment === "dev") {
         api.register(vendingPlugin, { prefix: "/vending" });

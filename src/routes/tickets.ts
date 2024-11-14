@@ -145,11 +145,12 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
       if (response.Items) {
         for (const item of response.Items.map((x) => unmarshall(x))) {
-          // Skip inactive items for non-managers
-          if (!isTicketingManager) {
-            if (item.item_sales_active_utc === -1) continue;
-            const itemDate = new Date(parseInt(item.item_sales_active_utc, 10));
-            if (itemDate > now) continue;
+          const itemDate = new Date(parseInt(item.item_sales_active_utc, 10));
+          if (
+            !isTicketingManager &&
+            (item.item_sales_active_utc === -1 || itemDate > now)
+          ) {
+            continue;
           }
 
           const memberPrice = parseInt(item.item_price?.paid, 10) || 0;
@@ -158,9 +159,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             itemId: item.item_id,
             itemName: item.item_name,
             itemSalesActive:
-              item.item_sales_active_utc === -1
-                ? false
-                : new Date(parseInt(item.item_sales_active_utc, 10)),
+              item.item_sales_active_utc === -1 ? false : itemDate,
             priceDollars: {
               member: memberPrice,
               nonMember: nonMemberPrice,
@@ -180,15 +179,13 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
       if (ticketResponse.Items) {
         for (const item of ticketResponse.Items.map((x) => unmarshall(x))) {
-          // Skip inactive items for non-managers
-          if (!isTicketingManager) {
-            if (item.event_sales_active_utc === -1) continue;
-            const itemDate = new Date(
-              parseInt(item.event_sales_active_utc, 10),
-            );
-            if (itemDate > now) continue;
+          const itemDate = new Date(parseInt(item.event_sales_active_utc, 10));
+          if (
+            !isTicketingManager &&
+            (item.event_sales_active_utc === -1 || itemDate > now)
+          ) {
+            continue;
           }
-
           const memberPrice = parseInt(item.eventCost?.paid, 10) || 0;
           const nonMemberPrice = parseInt(item.eventCost?.others, 10) || 0;
           ticketItems.push({

@@ -27,6 +27,8 @@ type GenericConfigType = {
   EntraTenantId: string;
   MerchStorePurchasesTableName: string;
   TicketPurchasesTableName: string;
+  TicketMetadataTableName: string;
+  MerchStoreMetadataTableName: string;
 };
 
 type EnvironmentConfigType = {
@@ -41,7 +43,9 @@ const genericConfig: GenericConfigType = {
   AwsRegion: process.env.AWS_REGION || "us-east-1",
   EntraTenantId: "c8d9148f-9a59-4db3-827d-42ea0c2b6e2e",
   MerchStorePurchasesTableName: "infra-merchstore-purchase-history",
+  MerchStoreMetadataTableName: "infra-merchstore-metadata",
   TicketPurchasesTableName: "infra-events-tickets",
+  TicketMetadataTableName: "infra-events-ticketing-metadata",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

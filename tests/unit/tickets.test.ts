@@ -1,7 +1,9 @@
 import { afterAll, expect, test, beforeEach, vi, describe } from "vitest";
 import {
+  AttributeValue,
   DynamoDBClient,
   QueryCommand,
+  ScanCommand,
   UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
@@ -19,12 +21,72 @@ import {
   unfulfilledTicket1,
   unfulfilledTicket1WithEmail,
 } from "./mockTickets.testdata.js";
+import {
+  merchMetadata,
+  ticketsMetadata,
+} from "./data/mockTIcketsMerchMetadata.testdata.js";
 
 const ddbMock = mockClient(DynamoDBClient);
 const jwt_secret = secretObject["jwt_key"];
 vi.stubEnv("JwtSigningKey", jwt_secret);
 
 const app = await init();
+
+describe("Test getting ticketing + merch metadata", async () => {
+  test("Happy path: get items", async () => {
+    ddbMock
+      .on(ScanCommand)
+      .resolvesOnce({
+        Items: merchMetadata as Record<string, AttributeValue>[],
+      })
+      .resolvesOnce({
+        Items: ticketsMetadata as Record<string, AttributeValue>[],
+      })
+      .rejects();
+    const testJwt = createJwt();
+    await app.ready();
+    const response = await supertest(app.server)
+      .get("/api/v1/tickets")
+      .set("authorization", `Bearer ${testJwt}`);
+    const responseDataJson = response.body;
+    expect(response.statusCode).toEqual(200);
+    expect(responseDataJson).toEqual({
+      merch: [
+        {
+          itemId: "2024_spr_tshirt",
+          itemName: "ACM T-Shirt: Spring 2024 Series",
+          itemSalesActive: "1970-01-01T00:00:00.000Z",
+          priceDollars: { member: 22, nonMember: 26 },
+        },
+        {
+          itemId: "2024_fa_barcrawl",
+          itemName: "ACM Bar Crawl: Fall 2024 (Nov 14)",
+          itemSalesActive: "1970-01-01T00:00:00.000Z",
+          priceDollars: { member: 15, nonMember: 18 },
+        },
+      ],
+      tickets: [
+        {
+          itemId: "fa23_barcrawl",
+          itemName: "ACM Fall 2023 Bar Crawl",
+          itemSalesActive: false,
+          priceDollars: { member: 15, nonMember: 18 },
+          eventCapacity: 130,
+          ticketsSold: 55,
+        },
+        {
+          itemId: "fa22_barcrawl",
+          itemName: "ACM Fall 2023 Bar Crawl",
+          itemSalesActive: false,
+          priceDollars: { member: 15, nonMember: 18 },
+          eventCapacity: 130,
+          ticketsSold: 55,
+        },
+      ],
+    });
+    expect(responseDataJson.tickets).toHaveLength(2);
+  });
+});
 
 describe("Test ticket purchase verification", async () => {
   test("Happy path: fulfill an unfulfilled item", async () => {

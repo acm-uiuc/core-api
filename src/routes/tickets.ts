@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   DynamoDBClient,
   QueryCommand,
+  ScanCommand,
   UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
@@ -64,6 +65,31 @@ const getTicketsResponseJsonSchema = zodToJsonSchema(
   }),
 );
 
+const baseItemMetadata = z.object({
+  itemId: z.string().min(1),
+  itemName: z.string().min(1),
+  itemSalesActive: z.union([z.date(), z.literal(false)]),
+  priceDollars: z.object({
+    member: z.number().min(0),
+    nonMember: z.number().min(0),
+  }),
+});
+
+const ticketingItemMetadata = baseItemMetadata.extend({
+  eventCapacity: z.number(),
+  ticketsSold: z.number(),
+});
+
+type ItemMetadata = z.infer<typeof baseItemMetadata>;
+type TicketItemMetadata = z.infer<typeof ticketingItemMetadata>;
+
+const listMerchItemsResponseJsonSchema = zodToJsonSchema(
+  z.object({
+    merch: z.array(baseItemMetadata),
+    tickets: z.array(ticketingItemMetadata),
+  }),
+);
+
 const postSchema = z.union([postMerchSchema, postTicketSchema]);
 
 type VerifyPostRequest = z.infer<typeof postSchema>;
@@ -78,7 +104,80 @@ type TicketsGetRequest = {
   Body: undefined;
 };
 
+type TicketsListRequest = {
+  Params: undefined;
+  Querystring: undefined;
+  Body: undefined;
+};
+
 const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
+  fastify.get<TicketsListRequest>(
+    "/",
+    {
+      schema: {
+        response: {
+          200: listMerchItemsResponseJsonSchema,
+        },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.TICKETS_MANAGER]);
+      },
+    },
+    async (request, reply) => {
+      const merchCommand = new ScanCommand({
+        TableName: genericConfig.MerchStoreMetadataTableName,
+        ProjectionExpression: "item_id, item_name, item_sales_active_utc",
+      });
+      const merchItems: ItemMetadata[] = [];
+      const response = await dynamoClient.send(merchCommand);
+      if (response.Items) {
+        for (const item of response.Items.map((x) => unmarshall(x))) {
+          const memberPrice = parseInt(item.item_price?.paid, 10) || 0;
+          const nonMemberPrice = parseInt(item.item_price?.others, 10) || 0;
+          merchItems.push({
+            itemId: item.item_id,
+            itemName: item.item_name,
+            itemSalesActive:
+              item.item_sales_active_utc === -1
+                ? false
+                : new Date(parseInt(item.item_sales_active_utc, 10)),
+            priceDollars: {
+              member: memberPrice,
+              nonMember: nonMemberPrice,
+            },
+          });
+        }
+      }
+      const ticketCommand = new ScanCommand({
+        TableName: genericConfig.TicketMetadataTableName,
+        ProjectionExpression:
+          "event_id, event_name, event_sales_active_utc, event_capacity, tickets_sold",
+      });
+      const ticketItems: TicketItemMetadata[] = [];
+      const ticketResponse = await dynamoClient.send(ticketCommand);
+      if (ticketResponse.Items) {
+        for (const item of ticketResponse.Items.map((x) => unmarshall(x))) {
+          const memberPrice = parseInt(item.eventCost?.paid, 10) || 0;
+          const nonMemberPrice = parseInt(item.eventCost?.others, 10) || 0;
+          ticketItems.push({
+            itemId: item.event_id,
+            itemName: item.event_name,
+            itemSalesActive:
+              item.event_sales_active_utc === -1
+                ? false
+                : new Date(parseInt(item.event_sales_active_utc, 10)),
+            eventCapacity: item.event_capacity,
+            ticketsSold: item.tickets_sold,
+            priceDollars: {
+              member: memberPrice,
+              nonMember: nonMemberPrice,
+            },
+          });
+        }
+      }
+      reply.send({ merch: merchItems, tickets: ticketItems });
+    },
+  );
   fastify.get<TicketsGetRequest>(
     "/:eventId",
     {

@@ -17,7 +17,6 @@ vi.mock("../../src/functions/entraId.js", () => {
       return "ey.test.token";
     }),
     addToTenant: vi.fn().mockImplementation(async (email) => {
-      console.log("FUCK", email);
       return { success: true, email: "testing@illinois.edu" };
     }),
   };

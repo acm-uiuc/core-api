@@ -119,13 +119,17 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         },
       },
       onRequest: async (request, reply) => {
-        await fastify.authorize(request, reply, [AppRoles.TICKETS_MANAGER]);
+        await fastify.authorize(request, reply, [
+          AppRoles.TICKETS_MANAGER,
+          AppRoles.TICKETS_SCANNER,
+        ]);
       },
     },
     async (request, reply) => {
       const merchCommand = new ScanCommand({
         TableName: genericConfig.MerchStoreMetadataTableName,
-        ProjectionExpression: "item_id, item_name, item_sales_active_utc",
+        ProjectionExpression:
+          "item_id, item_name, item_sales_active_utc, item_price",
       });
       const merchItems: ItemMetadata[] = [];
       const response = await dynamoClient.send(merchCommand);
@@ -150,7 +154,7 @@ const ticketsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       const ticketCommand = new ScanCommand({
         TableName: genericConfig.TicketMetadataTableName,
         ProjectionExpression:
-          "event_id, event_name, event_sales_active_utc, event_capacity, tickets_sold",
+          "event_id, event_name, event_sales_active_utc, event_capacity, tickets_sold, eventCost",
       });
       const ticketItems: TicketItemMetadata[] = [];
       const ticketResponse = await dynamoClient.send(ticketCommand);

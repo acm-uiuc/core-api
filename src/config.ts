@@ -29,6 +29,7 @@ type GenericConfigType = {
   TicketPurchasesTableName: string;
   TicketMetadataTableName: string;
   MerchStoreMetadataTableName: string;
+  IAMTablePrefix: string;
 };
 
 type EnvironmentConfigType = {
@@ -46,6 +47,7 @@ const genericConfig: GenericConfigType = {
   MerchStoreMetadataTableName: "infra-merchstore-metadata",
   TicketPurchasesTableName: "infra-events-tickets",
   TicketMetadataTableName: "infra-events-ticketing-metadata",
+  IAMTablePrefix: "infra-core-api-iam",
 } as const;
 
 const environmentConfig: EnvironmentConfigType = {

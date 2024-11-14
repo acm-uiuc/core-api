@@ -38,6 +38,17 @@ export abstract class BaseError<T extends string> extends Error {
   }
 }
 
+export class NotImplementedError extends BaseError<"NotImplementedError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "NotImplementedError",
+      id: 100,
+      message: message || "This feature has not been implemented yet.",
+      httpStatusCode: 500,
+    });
+  }
+}
+
 export class UnauthorizedError extends BaseError<"UnauthorizedError"> {
   constructor({ message }: { message: string }) {
     super({ name: "UnauthorizedError", id: 101, message, httpStatusCode: 401 });

@@ -5,13 +5,19 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { addToTenant, getEntraIdToken } from "../functions/entraId.js";
 import {
   BaseError,
+  DatabaseFetchError,
   DatabaseInsertError,
   EntraInvitationError,
   InternalServerError,
+  NotFoundError,
 } from "../errors/index.js";
-import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  PutItemCommand,
+} from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
-import { marshall } from "@aws-sdk/util-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
 const invitePostRequestSchema = z.object({
   emails: z.array(z.string()),
@@ -45,6 +51,52 @@ const dynamoClient = new DynamoDBClient({
 });
 
 const iamRoutes: FastifyPluginAsync = async (fastify, _options) => {
+  fastify.get<{
+    Body: undefined;
+    Querystring: { groupId: string };
+  }>(
+    "/groupRoles/:groupId",
+    {
+      schema: {
+        querystring: {
+          type: "object",
+          properties: {
+            groupId: {
+              type: "string",
+            },
+          },
+        },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.IAM_ADMIN]);
+      },
+    },
+    async (request, reply) => {
+      const groupId = (request.params as Record<string, string>).groupId;
+      try {
+        const command = new GetItemCommand({
+          TableName: `${genericConfig.IAMTablePrefix}-grouproles`,
+          Key: { groupUuid: { S: groupId } },
+        });
+        const response = await dynamoClient.send(command);
+        if (!response.Item) {
+          throw new NotFoundError({
+            endpointName: `/api/v1/iam/groupRoles/${groupId}`,
+          });
+        }
+        reply.send(unmarshall(response.Item));
+      } catch (e: unknown) {
+        if (e instanceof BaseError) {
+          throw e;
+        }
+
+        request.log.error(e);
+        throw new DatabaseFetchError({
+          message: "An error occurred finding the group role mapping.",
+        });
+      }
+    },
+  );
   fastify.post<{
     Body: GroupMappingCreatePostRequest;
     Querystring: { groupId: string };
@@ -75,11 +127,13 @@ const iamRoutes: FastifyPluginAsync = async (fastify, _options) => {
     async (request, reply) => {
       const groupId = (request.params as Record<string, string>).groupId;
       try {
+        const timestamp = new Date().toISOString();
         const command = new PutItemCommand({
           TableName: `${genericConfig.IAMTablePrefix}-grouproles`,
           Item: marshall({
             groupUuid: groupId,
             roles: request.body.roles,
+            createdAt: timestamp,
           }),
         });
 

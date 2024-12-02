@@ -3,6 +3,7 @@ import { PostgresDialect } from "@sequelize/postgres";
 import { InternalServerError } from "../errors/index.js";
 import { ShortLinkModel } from "../models/linkry.model.js";
 import { FastifyInstance } from "fastify";
+import SequelizeMock from "sequelize-mock";
 
 let logDebug: CallableFunction = console.log;
 let logFatal: CallableFunction = console.log;
@@ -19,6 +20,20 @@ export function setSequelizeLogger(
 export async function getSequelizeInstance(
   fastify: FastifyInstance,
 ): Promise<Sequelize> {
+  // If in the test environment, return a mock Sequelize instance
+  if (process.env.NODE_ENV === "test") {
+    const mockSequelize = new SequelizeMock();
+
+    // Define a mock ShortLinkModel to simulate database behavior
+    mockSequelize.define("ShortLink", {
+      id: 1,
+      name: "Mocked Link",
+    });
+
+    return mockSequelize;
+  }
+
+  // For non-test environments, initialize Sequelize with PostgreSQL
   const postgresUrl =
     process.env.DATABASE_URL || fastify.secretValue?.postgres_url || "";
 
@@ -35,9 +50,10 @@ export async function getSequelizeInstance(
       min: 0,
       idle: 0,
       acquire: 3000,
-      evict: 30, // lambda function timeout in seconds
+      evict: 30, // Lambda function timeout in seconds
     },
   });
+
   try {
     await sequelize.sync();
   } catch (e: unknown) {
@@ -46,5 +62,6 @@ export async function getSequelizeInstance(
       message: "Could not establish database connection.",
     });
   }
+
   return sequelize;
 }

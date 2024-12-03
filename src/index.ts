@@ -17,6 +17,7 @@ import vendingPlugin from "./routes/vending.js";
 import * as dotenv from "dotenv";
 import ssoManagementRoute from "./routes/sso.js";
 import ticketsPlugin from "./routes/tickets.js";
+import paideventsPlugin from "./routes/paidevents.js";
 dotenv.config();
 
 const now = () => Date.now();
@@ -71,6 +72,7 @@ async function init() {
     async (api, _options) => {
       api.register(protectedRoute, { prefix: "/protected" });
       api.register(eventsPlugin, { prefix: "/events" });
+      api.register(paideventsPlugin, { prefix: "/paidevents" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
       api.register(ssoManagementRoute, { prefix: "/sso" });

@@ -34,6 +34,20 @@ const genericConfig: GenericConfigType = {
   AwsRegion: process.env.AWS_REGION || "us-east-1",
 } as const;
 
+const ticketeventConfig: GenericConfigType = {
+  DynamoTableName: "infra-events-ticketing-metadata",
+  ConfigSecretName: "infra-core-api-config",
+  UpcomingEventThresholdSeconds: 1800,
+  AwsRegion: process.env.AWS_REGION || "us-east-1",
+} as const; // CHANGE ME to config secret
+
+const mercheventConfig: GenericConfigType = {
+  DynamoTableName: "infra-merchstore-metadata",
+  ConfigSecretName: "infra-core-api-config",
+  UpcomingEventThresholdSeconds: 1800,
+  AwsRegion: process.env.AWS_REGION || "us-east-1",
+} as const;
+
 const environmentConfig: EnvironmentConfigType = {
   dev: {
     GroupRoleMapping: {
@@ -77,4 +91,9 @@ export type SecretConfig = {
   discord_bot_token: string;
 };
 
-export { genericConfig, environmentConfig };
+export {
+  genericConfig,
+  ticketeventConfig,
+  mercheventConfig,
+  environmentConfig,
+};

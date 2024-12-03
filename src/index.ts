@@ -15,6 +15,7 @@ import organizationsPlugin from "./routes/organizations.js";
 import icalPlugin from "./routes/ics.js";
 import vendingPlugin from "./routes/vending.js";
 import * as dotenv from "dotenv";
+import paideventsPlugin from "./routes/paidevents.js";
 dotenv.config();
 
 const now = () => Date.now();
@@ -69,6 +70,7 @@ async function init() {
     async (api, _options) => {
       api.register(protectedRoute, { prefix: "/protected" });
       api.register(eventsPlugin, { prefix: "/events" });
+      api.register(paideventsPlugin, { prefix: "/paidevents" });
       api.register(organizationsPlugin, { prefix: "/organizations" });
       api.register(icalPlugin, { prefix: "/ical" });
       if (app.runEnvironment === "dev") {

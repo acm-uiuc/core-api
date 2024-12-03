@@ -10,7 +10,7 @@ import {
   ScalarAttributeType,
   ConditionalCheckFailedException,
 } from "@aws-sdk/client-dynamodb";
-import { ticketeventConfig, mercheventConfig } from "../config.js";
+import { genericConfig } from "../config.js";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import {
   BaseError,
@@ -23,7 +23,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { AppRoles } from "../roles.js";
 
 const dynamoclient = new DynamoDBClient({
-  region: ticketeventConfig.AwsRegion,
+  region: genericConfig.AwsRegion,
 });
 
 type EventGetRequest = {
@@ -70,7 +70,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     try {
       const response = await dynamoclient.send(
         new ScanCommand({
-          TableName: ticketeventConfig.DynamoTableName,
+          TableName: genericConfig.TicketMetadataTableName,
         }),
       );
       const items = response.Items?.map((item) => unmarshall(item));
@@ -95,7 +95,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
     try {
       const response = await dynamoclient.send(
         new ScanCommand({
-          TableName: mercheventConfig.DynamoTableName,
+          TableName: genericConfig.MerchStoreMetadataTableName,
         }),
       );
       const items = response.Items?.map((item) => unmarshall(item));
@@ -125,7 +125,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         const response = await dynamoclient.send(
           new QueryCommand({
-            TableName: ticketeventConfig.DynamoTableName,
+            TableName: genericConfig.TicketMetadataTableName,
             KeyConditionExpression: "event_id = :id",
             ExpressionAttributeValues: {
               ":id": { S: id },
@@ -155,7 +155,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       try {
         const response = await dynamoclient.send(
           new QueryCommand({
-            TableName: mercheventConfig.DynamoTableName,
+            TableName: genericConfig.MerchStoreMetadataTableName,
             KeyConditionExpression: "item_id = :id",
             ExpressionAttributeValues: {
               ":id": { S: id },
@@ -204,7 +204,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
         const response = await dynamoclient.send(
           new UpdateItemCommand({
-            TableName: ticketeventConfig.DynamoTableName,
+            TableName: genericConfig.TicketMetadataTableName,
             Key: {
               event_id: { S: id },
             },
@@ -265,7 +265,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
         const response = await dynamoclient.send(
           new UpdateItemCommand({
-            TableName: mercheventConfig.DynamoTableName,
+            TableName: genericConfig.MerchStoreMetadataTableName,
             Key: {
               item_id: { S: id },
             },

@@ -27,6 +27,7 @@ const errorHandlerPlugin = fp(async (fastify) => {
           finalErr.toString(),
         );
       } else if (err instanceof Error) {
+        request.log.error(err);
         request.log.error(
           { errName: err.name, errMessage: err.message },
           "Native unhandled error: response sent to client.",

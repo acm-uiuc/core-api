@@ -122,3 +122,49 @@ export class DiscordEventError extends BaseError<"DiscordEventError"> {
     });
   }
 }
+
+export class EntraInvitationError extends BaseError<"EntraInvitationError"> {
+  email: string;
+  constructor({ message, email }: { message?: string; email: string }) {
+    super({
+      name: "EntraInvitationError",
+      id: 108,
+      message: message || "Could not invite user to Entra ID.",
+      httpStatusCode: 500,
+    });
+    this.email = email;
+  }
+}
+
+export class TicketNotFoundError extends BaseError<"TicketNotFoundError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "TicketNotFoundError",
+      id: 108,
+      message: message || "Could not find the ticket presented.",
+      httpStatusCode: 404,
+    });
+  }
+}
+
+export class TicketNotValidError extends BaseError<"TicketNotValidError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "TicketNotValidError",
+      id: 109,
+      message: message || "Ticket presented was found but is not valid.",
+      httpStatusCode: 400,
+    });
+  }
+}
+
+export class NotSupportedError extends BaseError<"NotSupportedError"> {
+  constructor({ message }: { message?: string }) {
+    super({
+      name: "NotSupportedError",
+      id: 110,
+      message: message || "This operation is not supported.",
+      httpStatusCode: 400,
+    });
+  }
+}

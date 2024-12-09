@@ -1,26 +1,16 @@
-import fastify, { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { FastifyPluginAsync, FastifyRequest } from "fastify";
 import {
-  DeleteItemCommand,
   DynamoDBClient,
-  GetItemCommand,
-  PutItemCommand,
   UpdateItemCommand,
   QueryCommand,
   ScanCommand,
-  ScalarAttributeType,
   ConditionalCheckFailedException,
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import {
-  BaseError,
-  DatabaseFetchError,
-  DatabaseInsertError,
-  ValidationError,
-} from "../errors/index.js";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DatabaseFetchError } from "../errors/index.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { AppRoles } from "../roles.js";
 
 const dynamoclient = new DynamoDBClient({
   region: genericConfig.AwsRegion,
@@ -62,11 +52,11 @@ const responseJsonSchema = zodToJsonSchema(
   }),
 );
 
-const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
+const paidEventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   fastify.get("/", (request, reply) => {
     reply.send({ Status: "Up" });
   });
-  fastify.get("/ticketevents", async (request, reply) => {
+  fastify.get("/ticketEvents", async (request, reply) => {
     try {
       const response = await dynamoclient.send(
         new ScanCommand({
@@ -91,7 +81,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
       });
     }
   });
-  fastify.get("/merchevents", async (request, reply) => {
+  fastify.get("/merchEvents", async (request, reply) => {
     try {
       const response = await dynamoclient.send(
         new ScanCommand({
@@ -119,7 +109,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
 
   //helper get no validation
   fastify.get<EventGetRequest>(
-    "/ticketevents/:id",
+    "/ticketEvents/:id",
     async (request: FastifyRequest<EventGetRequest>, reply) => {
       const id = request.params.id;
       try {
@@ -149,7 +139,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   );
 
   fastify.get<EventGetRequest>(
-    "/merchevents/:id",
+    "/merchEvents/:id",
     async (request: FastifyRequest<EventGetRequest>, reply) => {
       const id = request.params.id;
       try {
@@ -179,7 +169,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   );
 
   fastify.put<EventUpdateRequest>(
-    "/ticketevents/:id",
+    "/ticketEvents/:id",
     {
       schema: {
         response: { 200: responseJsonSchema },
@@ -202,7 +192,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           valueExpression = { N: value };
         }
 
-        const response = await dynamoclient.send(
+        const _response = await dynamoclient.send(
           new UpdateItemCommand({
             TableName: genericConfig.TicketMetadataTableName,
             Key: {
@@ -216,12 +206,11 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             ExpressionAttributeValues: {
               ":value": valueExpression,
             },
-            ReturnValues: "ALL_NEW",
           }),
         );
         reply.send({
           id: id,
-          resource: `/api/v1/paidevents/ticketevents/${id}`,
+          resource: `/api/v1/paidEvents/ticketEvents/${id}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
@@ -240,7 +229,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   //Multiple attribute udpates...
 
   fastify.put<EventUpdateRequest>(
-    "/merchevents/:id",
+    "/merchEvents/:id",
     {
       schema: {
         response: { 200: responseJsonSchema },
@@ -263,7 +252,7 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
           valueExpression = { N: value };
         }
 
-        const response = await dynamoclient.send(
+        const _response = await dynamoclient.send(
           new UpdateItemCommand({
             TableName: genericConfig.MerchStoreMetadataTableName,
             Key: {
@@ -277,12 +266,11 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
             ExpressionAttributeValues: {
               ":value": valueExpression,
             },
-            ReturnValues: "ALL_NEW",
           }),
         );
         reply.send({
           id: id,
-          resource: `/api/v1/paidevents/merchevents/${id}`,
+          resource: `/api/v1/paidEvents/merchEvents/${id}`,
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
@@ -299,4 +287,4 @@ const paideventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
   );
 };
 
-export default paideventsPlugin;
+export default paidEventsPlugin;

@@ -21,7 +21,7 @@ export async function getSequelizeInstance(
   fastify: FastifyInstance,
 ): Promise<Sequelize> {
   // If in the test environment, return a mock Sequelize instance
-  if (process.env.NODE_ENV === "test") {
+  if (process.env.CI === "true") {
     const mockSequelize = new SequelizeMock();
 
     // Define a mock ShortLinkModel to simulate database behavior

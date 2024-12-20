@@ -5,12 +5,15 @@ import {
   QueryCommand,
   ScanCommand,
   ConditionalCheckFailedException,
+  PutItemCommand,
+  DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { genericConfig } from "../config.js";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { DatabaseFetchError } from "../errors/index.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { AppRoles } from "../roles.js";
 
 const dynamoclient = new DynamoDBClient({
   region: genericConfig.AwsRegion,
@@ -28,22 +31,28 @@ type EventUpdateRequest = {
   Body: { attribute: string; value: string };
 };
 
-/*const updateJsonSchema = zodToJsonSchema(
-  z.object({
-    event_id: z.number(),
-    event_name: z.string(),
-    eventCost: z.record(z.number()),
-    eventDetails: z.optional(z.string()),
-    eventImage: z.optional(z.string()),
-    eventProps: z.record(z.string(), z.string()),
-    event_capacity: z.number(),
-    event_sales_active_utc: z.string(),
-    event_time: z.number(),
-    member_price: z.optional(z.string()),
-    nonmember_price: z.optional(z.string()),
-    tickets_sold: z.number()
-  })
-)*/
+type EventDeleteRequest = {
+  Params: { id: string };
+  Querystring: undefined;
+  Body: undefined;
+};
+
+export const postTicketSchema = z.object({
+  event_id: z.string(),
+  event_name: z.string(),
+  eventCost: z.record(z.number()),
+  eventDetails: z.optional(z.string()),
+  eventImage: z.optional(z.string()),
+  eventProps: z.optional(z.record(z.string(), z.string())),
+  event_capacity: z.number(),
+  event_sales_active_utc: z.string(),
+  event_time: z.number(),
+  member_price: z.optional(z.string()),
+  nonmember_price: z.optional(z.string()),
+  tickets_sold: z.number(),
+});
+
+type TicketPostSchema = z.infer<typeof postTicketSchema>;
 
 const responseJsonSchema = zodToJsonSchema(
   z.object({
@@ -214,19 +223,17 @@ const paidEventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
-          request.log.error("Failed to get from DynamoDB: " + e.toString());
+          request.log.error("Failed to update to DynamoDB: " + e.toString());
         }
         if (e instanceof ConditionalCheckFailedException) {
           request.log.error("Attribute does not exist");
         }
         throw new DatabaseFetchError({
-          message: "Failed to get event from Dynamo table.",
+          message: "Failed to update event in Dynamo table.",
         });
       }
     },
   );
-
-  //Multiple attribute udpates...
 
   fastify.put<EventUpdateRequest>(
     "/merchEvents/:id",
@@ -274,13 +281,102 @@ const paidEventsPlugin: FastifyPluginAsync = async (fastify, _options) => {
         });
       } catch (e: unknown) {
         if (e instanceof Error) {
-          request.log.error("Failed to get from DynamoDB: " + e.toString());
+          request.log.error("Failed to update to DynamoDB: " + e.toString());
         }
         if (e instanceof ConditionalCheckFailedException) {
           request.log.error("Attribute does not exist");
         }
         throw new DatabaseFetchError({
-          message: "Failed to get event from Dynamo table.",
+          message: "Failed to update event in Dynamo table.",
+        });
+      }
+    },
+  );
+
+  fastify.post<{ Body: TicketPostSchema }>(
+    "/ticketEvents",
+    {
+      schema: {
+        response: { 200: responseJsonSchema },
+      },
+      preValidation: async (request, reply) => {
+        await fastify.zodValidateBody(request, reply, postTicketSchema);
+      },
+      /*onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.EVENTS_MANAGER]);
+      },*/ //validation taken off
+    },
+    async (request: FastifyRequest<{ Body: TicketPostSchema }>, reply) => {
+      const id = request.body.event_id;
+      try {
+        //Verify if event_id already exists
+        const response = await dynamoclient.send(
+          new QueryCommand({
+            TableName: genericConfig.TicketMetadataTableName,
+            KeyConditionExpression: "event_id = :id",
+            ExpressionAttributeValues: {
+              ":id": { S: id },
+            },
+          }),
+        );
+        if (response.Items?.length != 0) {
+          throw new Error("Event_id already exists");
+        }
+        const entry = {
+          ...request.body,
+        };
+        await dynamoclient.send(
+          new PutItemCommand({
+            TableName: genericConfig.TicketMetadataTableName,
+            Item: marshall(entry),
+          }),
+        );
+        reply.send({
+          id: id,
+          resource: `/api/v1/paidEvents/ticketEvents/${id}`,
+        });
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to post to DynamoDB: " + e.toString());
+        }
+        throw new DatabaseFetchError({
+          message: "Failed to post event to Dynamo table.",
+        });
+      }
+    },
+  );
+
+  fastify.delete<EventDeleteRequest>(
+    "/ticketEvents/:id",
+    {
+      schema: {
+        response: { 200: responseJsonSchema },
+      },
+      onRequest: async (request, reply) => {
+        await fastify.authorize(request, reply, [AppRoles.EVENTS_MANAGER]);
+      }, //auth
+    },
+    async (request: FastifyRequest<EventDeleteRequest>, reply) => {
+      const id = request.params.id;
+      try {
+        await dynamoclient.send(
+          new DeleteItemCommand({
+            TableName: genericConfig.TicketMetadataTableName,
+            Key: {
+              event_id: { S: id },
+            },
+          }),
+        );
+        reply.send({
+          id: id,
+          resource: `/api/v1/paidEvents/ticketEvents/${id}`,
+        });
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          request.log.error("Failed to delete from DynamoDB: " + e.toString());
+        }
+        throw new DatabaseFetchError({
+          message: "Failed to delete event from Dynamo table.",
         });
       }
     },
